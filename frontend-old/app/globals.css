@@ -1,0 +1,239 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Interactive Matrix Cell Styles */
+.matrix-cell {
+  @apply transition-all duration-200 ease-in-out;
+  @apply cursor-pointer;
+}
+
+.matrix-cell:hover {
+  @apply shadow-lg;
+  background-color: rgba(0, 0, 0, 0.06);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.matrix-cell:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-opacity-50;
+  background-color: rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.matrix-cell:active {
+  background-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) inset;
+  transform: translateY(-1px) scale(0.98);
+  transition: all 120ms ease-out;
+}
+
+/* Interactive Bar Chart Styles */
+.recharts-bar-rectangle {
+  @apply transition-all duration-200 ease-in-out;
+  cursor: pointer;
+  filter: brightness(1);
+}
+
+.recharts-bar-rectangle:hover {
+  filter: brightness(1.1) saturate(1.1);
+  transform: scaleY(1.03);
+  transform-origin: bottom;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.recharts-bar-rectangle:active {
+  filter: brightness(0.95);
+  transform: scaleY(1);
+  filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+  transition: all 60ms ease-out;
+}
+
+/* Interactive Card Styles */
+.interactive-card {
+  @apply transition-all duration-200 ease-in-out;
+  @apply cursor-pointer;
+}
+
+.interactive-card:hover {
+  @apply shadow-lg;
+  transform: translateY(-1px) scale(1.01);
+}
+
+.interactive-card:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-opacity-50;
+  @apply shadow-lg;
+  transform: translateY(-1px) scale(1.01);
+}
+
+.interactive-card:active {
+  @apply shadow-none;
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: translateY(0) scale(0.98);
+  transition: all 120ms ease-out;
+}
+
+/* Ripple Effect Animation */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: scale(0);
+  animation: ripple 600ms linear;
+  pointer-events: none;
+}
+
+/* Bar chart hover enhancement */
+.recharts-responsive-container .recharts-wrapper .recharts-bar-rectangle {
+  transition: all 200ms ease-in-out;
+}
+
+/* Smooth transitions for all interactive elements */
+.interactive-element {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+/* Focus styles for accessibility */
+.interactive-element:focus-visible {
+  @apply outline-2 outline-offset-2 outline-blue-500;
+}
+
+/* Additional Chart Interaction Styles */
+.recharts-scatter circle {
+  @apply transition-all duration-200 ease-in-out;
+  cursor: pointer;
+}
+
+.recharts-scatter circle:hover {
+  filter: brightness(1.1) saturate(1.15) drop-shadow(0 6px 20px rgba(0, 0, 0, 0.25)) drop-shadow(0 3px 10px rgba(0, 0, 0, 0.15));
+  transform: scale(1.25) translateY(-2px);
+  animation: pulse-glow 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% {
+    filter: brightness(1.1) saturate(1.15) drop-shadow(0 6px 20px rgba(0, 0, 0, 0.25)) drop-shadow(0 3px 10px rgba(0, 0, 0, 0.15));
+  }
+  100% {
+    filter: brightness(1.2) saturate(1.25) drop-shadow(0 8px 25px rgba(0, 0, 0, 0.3)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+  }
+}
+
+.recharts-pie-sector {
+  @apply transition-all duration-200 ease-in-out;
+  cursor: pointer;
+}
+
+.recharts-pie-sector:hover {
+  filter: brightness(1.08) saturate(1.1);
+  transform: scale(1.02);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.12));
+}
+
+/* Violin chart interaction */
+.violin-chart {
+  cursor: pointer;
+}
+
+.violin-chart:hover {
+  filter: brightness(1.05);
+}
+
+/* Matrix scatter points */
+.matrix-scatter-dot {
+  @apply transition-all duration-200 ease-in-out;
+  cursor: pointer;
+}
+
+.matrix-scatter-dot:hover {
+  filter: brightness(1.1) saturate(1.1);
+  transform: scale(1.2);
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+}
+
+/* General clickable element styles */
+[style*="cursor: pointer"] {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+[style*="cursor: pointer"]:hover:not(.matrix-cell) {
+  filter: brightness(1.05) saturate(1.05);
+}
