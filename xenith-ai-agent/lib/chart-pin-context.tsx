@@ -35,7 +35,16 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
     if (saved) {
       try {
         const parsedCharts = JSON.parse(saved)
-        setPinnedCharts(parsedCharts)
+        // Update any charts with old dates to new dates
+        const updatedCharts = parsedCharts.map((chart: ChartData) => {
+          if (chart.id === "critical-categories" && (chart.lastUpdated === "2024-01-20" || chart.lastUpdated.includes("2024-01-20"))) {
+            return { ...chart, lastUpdated: "2025-05-20" }
+          }
+          return chart
+        })
+        setPinnedCharts(updatedCharts)
+        // Save the updated charts back to localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCharts))
       } catch (error) {
         console.error('Error loading pinned charts:', error)
       }
@@ -46,7 +55,7 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
         title: "Top 10 Most Critical Categories by Negative Reviews Count",
         projectName: "Customer Pain Points Analysis",
         projectId: "1",
-        lastUpdated: "2024-01-20",
+        lastUpdated: "2025-05-20",
         autoUpdate: "weekly",
         type: "bar",
         isPinned: true
@@ -89,7 +98,7 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
       title: "Top 10 Most Critical Categories by Negative Reviews Count",
       projectName: "Customer Pain Points Analysis",
       projectId: "1",
-      lastUpdated: "2024-01-20",
+      lastUpdated: "2025-05-20",
       autoUpdate: "weekly",
       type: "bar",
       isPinned: true

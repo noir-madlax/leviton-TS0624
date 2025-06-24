@@ -142,11 +142,14 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             <div className="flex items-center gap-2">
               <Link href={`/project/${projectId}/chat`}>
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 relative overflow-hidden group"
                 >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  AI Chat
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  <MessageSquare className="h-4 w-4 mr-2 relative z-10" />
+                  <span className="relative z-10 font-medium">Ask Xenith</span>
+                  <div className="absolute inset-0 bg-white/10 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </Button>
               </Link>
               <Button variant="outline" size="sm">
@@ -208,12 +211,13 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                       </div>
                       <PinButton chart={{
                         id: "use-case-analysis",
-                        title: "What use cases do customers complain about the most?",
+                        title: "Use Case Analysis",
                         projectName: "Customer Pain Points Analysis",
                         projectId: "1",
-                        lastUpdated: "2024-01-20",
+                        lastUpdated: "2025-05-20",
                         autoUpdate: "weekly",
-                        type: "bar"
+                        type: "bar",
+                        isPinned: false
                       }} />
                     </div>
                   </CardHeader>
@@ -230,17 +234,18 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                       <div>
                         <CardTitle>Top 10 Most Critical Categories by Negative Reviews Count</CardTitle>
                         <p className="text-sm text-muted-foreground">
-                          Product features with highest customer complaints
+                          Categories with highest volume of negative customer feedback
                         </p>
                       </div>
                       <PinButton chart={{
-                        id: "critical-categories",
+                        id: "critical-categories", 
                         title: "Top 10 Most Critical Categories by Negative Reviews Count",
                         projectName: "Customer Pain Points Analysis",
                         projectId: "1",
-                        lastUpdated: "2024-01-20",
+                        lastUpdated: "2025-05-20",
                         autoUpdate: "weekly",
-                        type: "bar"
+                        type: "bar",
+                        isPinned: false
                       }} />
                     </div>
                   </CardHeader>
@@ -262,12 +267,13 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                       </div>
                       <PinButton chart={{
                         id: "competitor-matrix",
-                        title: "Competitor Delights and Pain Points Matrix",
+                        title: "Competitor Pain Points Matrix", 
                         projectName: "Customer Pain Points Analysis",
                         projectId: "1",
-                        lastUpdated: "2024-01-19",
+                        lastUpdated: "2025-05-19",
                         autoUpdate: "weekly",
-                        type: "matrix"
+                        type: "matrix",
+                        isPinned: false
                       }} />
                     </div>
                   </CardHeader>
@@ -338,12 +344,13 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           </div>
                           <PinButton chart={{
                             id: "brand-price-distribution",
-                            title: "Brand Price Distribution by Category",
+                            title: "Brand Price Distribution Analysis",
                             projectName: "Dimmer Switch Price Analysis",
                             projectId: "2",
-                            lastUpdated: "2024-01-18",
+                            lastUpdated: "2025-05-18",
                             autoUpdate: "monthly",
-                            type: "violin"
+                            type: "violin",
+                            isPinned: false
                           }} />
                         </div>
                       </CardHeader>
@@ -368,13 +375,14 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                             </p>
                           </div>
                           <PinButton chart={{
-                            id: "revenue-analysis",
-                            title: "Top 20 Products by Revenue (Price vs Revenue by Category)",
+                            id: "revenue-analysis", 
+                            title: "Revenue Analysis by Price Segment",
                             projectName: "Dimmer Switch Price Analysis",
                             projectId: "2",
-                            lastUpdated: "2024-01-17",
+                            lastUpdated: "2025-05-17",
                             autoUpdate: null,
-                            type: "scatter"
+                            type: "scatter",
+                            isPinned: false
                           }} />
                         </div>
                       </CardHeader>

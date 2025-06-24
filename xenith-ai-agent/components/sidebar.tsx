@@ -101,7 +101,7 @@ export function Sidebar({ projects, charts, collapsed, onToggle }: SidebarProps)
                   <div className="text-xs text-gray-500 mb-2">{project.category}</div>
                   <div className="flex items-center space-x-1 text-xs text-gray-400">
                     <Calendar className="w-3 h-3" />
-                    <span>Created {new Date(project.createdAt).toLocaleDateString()}</span>
+                    <span>Created {new Date(project.createdAt).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}</span>
                   </div>
                 </div>
               </Link>
@@ -135,7 +135,7 @@ export function Sidebar({ projects, charts, collapsed, onToggle }: SidebarProps)
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-1 text-xs text-gray-400">
                     <Calendar className="w-3 h-3" />
-                    <span>{new Date(chart.lastUpdated).toLocaleDateString()}</span>
+                    <span>{new Date(chart.lastUpdated).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     {chart.autoUpdate && (

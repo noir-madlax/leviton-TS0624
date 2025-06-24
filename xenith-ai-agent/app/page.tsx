@@ -31,8 +31,8 @@ const defaultProjects = [
     id: "1",
     name: "Customer Pain Points Analysis",
     category: "Smart Home > Dimmer & Light Switches",
-    createdAt: "2024-01-15",
-    lastUpdated: "2024-01-20",
+    createdAt: "2025-05-15",
+    lastUpdated: "2025-05-20",
     status: "completed",
   },
 ]
@@ -41,8 +41,8 @@ const project2 = {
   id: "2",
   name: "Dimmer Switch Price Analysis",
   category: "Smart Home > Dimmer & Light Switches",
-  createdAt: "2024-06-24",
-  lastUpdated: "2024-06-24",
+  createdAt: "2025-05-24",
+  lastUpdated: "2025-05-24",
   status: "completed",
 }
 
@@ -51,7 +51,7 @@ const mockCharts = [
     id: "1",
     title: "Use Case Analysis",
     projectName: "Customer Pain Points Analysis",
-    lastUpdated: "2024-01-20",
+    lastUpdated: "2025-05-20",
     autoUpdate: "weekly",
     type: "bar",
   },
@@ -59,7 +59,7 @@ const mockCharts = [
     id: "2",
     title: "Top 10 Critical Categories",
     projectName: "Customer Pain Points Analysis",
-    lastUpdated: "2024-01-18",
+    lastUpdated: "2025-05-18",
     autoUpdate: "monthly",
     type: "bar",
   },
@@ -67,7 +67,7 @@ const mockCharts = [
     id: "3",
     title: "Competitor Pain Points Matrix",
     projectName: "Customer Pain Points Analysis",
-    lastUpdated: "2024-01-19",
+    lastUpdated: "2025-05-19",
     autoUpdate: "weekly",
     type: "matrix",
   },
@@ -75,7 +75,7 @@ const mockCharts = [
     id: "4",
     title: "Feature Adoption Rates",
     projectName: "Kitchen Appliances Market Research",
-    lastUpdated: "2024-01-17",
+    lastUpdated: "2025-05-17",
     autoUpdate: null,
     type: "bar",
   },
@@ -268,7 +268,7 @@ export default function HomePage() {
                             <div className="flex items-center justify-between text-xs text-gray-500 mb-3 pt-2 border-t">
                               <div className="flex items-center space-x-1">
                                 <Calendar className="w-3 h-3" />
-                                <span>Updated {new Date(chart.lastUpdated).toLocaleDateString()}</span>
+                                <span>Updated {new Date(chart.lastUpdated).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}</span>
                               </div>
                               {chart.autoUpdate && (
                                 <Badge variant="outline" className="text-xs">

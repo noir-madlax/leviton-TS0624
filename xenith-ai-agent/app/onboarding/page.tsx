@@ -1,11 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
 import {
   ArrowLeft,
   Clock,
@@ -31,6 +34,8 @@ import {
   Microscope,
   Lightbulb,
   ToggleLeft,
+  Filter,
+  RefreshCw,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -199,67 +204,53 @@ const categories = [
       "Small Animal Supplies",
       "Reptile & Amphibian",
       "Horse Supplies",
-      "Pet Health & Wellness",
     ],
   },
   {
-    id: "food-grocery",
-    name: "Food & Grocery",
-    icon: ShoppingCart,
-    subcategories: [
-      "Beverages",
-      "Snack Foods",
-      "Pantry Staples",
-      "Breakfast Foods",
-      "Candy & Chocolate",
-      "Cooking & Baking",
-      "International Foods",
-      "Organic & Natural",
-    ],
-  },
-  {
-    id: "beauty-health",
-    name: "Beauty & Health",
+    id: "beauty-personal-care",
+    name: "Beauty & Personal Care",
     icon: Sparkles,
     subcategories: [
-      "Skincare",
       "Makeup",
+      "Skin Care",
       "Hair Care",
       "Fragrance",
+      "Oral Care",
+      "Shaving & Hair Removal",
       "Personal Care",
-      "Health & Wellness",
-      "Vitamins & Supplements",
-      "Medical Supplies",
+      "Foot, Hand & Nail Care",
     ],
   },
   {
-    id: "toys-kids-baby",
-    name: "Toys, Kids & Baby",
+    id: "baby",
+    name: "Baby",
     icon: Baby,
     subcategories: [
-      "Toys & Games",
-      "Baby Products",
-      "Kids' Furniture",
-      "School & Educational Supplies",
+      "Diapering",
+      "Feeding",
       "Baby & Toddler Toys",
-      "Action Figures",
-      "Dolls & Accessories",
-      "Building Toys",
+      "Baby Care",
+      "Nursery",
+      "Strollers & Accessories",
+      "Car Seats & Accessories",
+      "Baby & Toddler Clothing",
     ],
   },
   {
-    id: "handmade",
-    name: "Handmade",
+    id: "arts-crafts-sewing",
+    name: "Arts, Crafts & Sewing",
     icon: Palette,
     subcategories: [
-      "Handmade Jewelry",
-      "Handmade Home & Kitchen",
-      "Handmade Clothing",
-      "Handmade Artwork",
-      "Handmade Accessories",
-      "Handmade Baby Products",
-      "Handmade Pet Supplies",
-      "Handmade Gifts",
+      "Painting, Drawing & Art Supplies",
+      "Beading & Jewelry Making",
+      "Crafting",
+      "Fabric",
+      "Knitting & Crochet",
+      "Needlework",
+      "Organization, Storage & Transport",
+      "Printmaking",
+      "Scrapbooking & Stamping",
+      "Sewing",
     ],
   },
   {
@@ -291,12 +282,14 @@ const categories = [
       "Oils & Fluids",
       "Paint & Body Repair",
       "Replacement Parts",
+      "RV Parts & Accessories",
+      "Tires & Wheels",
       "Tools & Equipment",
     ],
   },
   {
     id: "industrial-scientific",
-    name: "Industrial and Scientific",
+    name: "Industrial & Scientific",
     icon: Microscope,
     subcategories: [
       "Abrasive & Finishing Products",
@@ -330,18 +323,79 @@ const productTypes = [
   { id: "dimmer-switch", name: "Dimmer Switch", icon: ToggleLeft },
 ]
 
+// Detail filter data (based on the second image)
+const detailFilterData = {
+  dataSources: [
+    { id: "amazon", name: "Amazon", checked: true },
+    { id: "home-depot", name: "Home Depot", checked: true },
+  ],
+  topBrands: [
+    { id: "lutron", name: "Lutron", percentage: 49 },
+    { id: "leviton", name: "Leviton", percentage: 26 },
+    { id: "ge", name: "GE", percentage: 10 },
+    { id: "legrand", name: "Legrand", percentage: 4 },
+    { id: "bestten", name: "BESTTEN", percentage: 4 },
+  ],
+  salesRanking: {
+    filter: "Top 100 Products",
+    description: "Based on monthly sales volume"
+  },
+  sampleData: {
+    products: 225,
+    brands: 9,
+    reviews: 228011,
+    avgSalesPerMonth: 337
+  }
+}
+
 export default function OnboardingPage() {
   const [selectedCategory, setSelectedCategory] = useState("")
   const [selectedSubcategory, setSelectedSubcategory] = useState("")
   const [selectedProductTypes, setSelectedProductTypes] = useState<string[]>([])
   const [selectedCharts, setSelectedCharts] = useState<string[]>(["brand-price-distribution", "revenue-analysis"])
+  const [detailFilters, setDetailFilters] = useState(detailFilterData)
+  const [showDetailFilter, setShowDetailFilter] = useState(false)
   const router = useRouter()
 
+  // Refs for scroll anchoring
+  const subcategoryRef = useRef<HTMLDivElement>(null)
+  const productTypesRef = useRef<HTMLDivElement>(null)
+  const chartsRef = useRef<HTMLDivElement>(null)
+
   const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory)
+
+  // Scroll to element with smooth animation
+  const scrollToElement = (ref: React.RefObject<HTMLDivElement>) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "start",
+        inline: "nearest"
+      })
+    }
+  }
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId)
     setSelectedSubcategory("") // Reset subcategory when category changes
+    
+    // Scroll to subcategory section after a short delay
+    setTimeout(() => {
+      scrollToElement(subcategoryRef)
+    }, 300)
+  }
+
+  const handleSubcategoryChange = (subcategory: string) => {
+    setSelectedSubcategory(subcategory)
+    
+    // Scroll to product types section if it's smart home, otherwise scroll to charts
+    setTimeout(() => {
+      if (selectedCategory === "smart-home") {
+        scrollToElement(productTypesRef)
+      } else {
+        scrollToElement(chartsRef)
+      }
+    }, 300)
   }
 
   const handleProductTypeToggle = (productTypeId: string) => {
@@ -350,6 +404,13 @@ export default function OnboardingPage() {
         ? prev.filter(id => id !== productTypeId)
         : [...prev, productTypeId]
     )
+    
+    // Scroll to charts section when product type selection changes
+    if (selectedProductTypes.length === 0) {
+      setTimeout(() => {
+        scrollToElement(chartsRef)
+      }, 300)
+    }
   }
 
   const handleChartToggle = (chartId: string) => {
@@ -358,6 +419,24 @@ export default function OnboardingPage() {
         ? prev.filter(id => id !== chartId)
         : [...prev, chartId]
     )
+  }
+
+  const handleDetailFilterChange = (category: string, id: string) => {
+    setDetailFilters(prev => ({
+      ...prev,
+      [category]: prev[category as keyof typeof prev].map((item: any) => 
+        item.id === id ? { ...item, checked: !item.checked } : item
+      )
+    }))
+  }
+
+  const resetDetailFilters = () => {
+    setDetailFilters(detailFilterData)
+  }
+
+  const applyDetailFilters = () => {
+    setShowDetailFilter(false)
+    // Here you would typically update the main data based on filters
   }
 
   const handleStartAnalysis = () => {
@@ -412,10 +491,10 @@ export default function OnboardingPage() {
             </CardHeader>
             <CardContent>
               <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-                                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a product category..." />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px] overflow-y-auto">
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a product category..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] overflow-y-auto">
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       <div className="flex items-center space-x-2">
@@ -432,7 +511,7 @@ export default function OnboardingPage() {
 
           {/* Subcategory Selection */}
           {selectedCategoryData && (
-            <Card className="border-blue-200 bg-blue-50/30">
+            <Card ref={subcategoryRef} className="border-blue-200 bg-blue-50/30">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <selectedCategoryData.icon className="w-5 h-5 text-blue-600" />
@@ -440,11 +519,11 @@ export default function OnboardingPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
-                                      <SelectTrigger>
-                      <SelectValue placeholder="Choose a specific subcategory..." />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px] overflow-y-auto">
+                <Select value={selectedSubcategory} onValueChange={handleSubcategoryChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a specific subcategory..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px] overflow-y-auto">
                     {selectedCategoryData.subcategories.map((sub) => (
                       <SelectItem key={sub} value={sub}>
                         {selectedCategoryData.name} {">"} {sub}
@@ -458,11 +537,130 @@ export default function OnboardingPage() {
 
           {/* Product Type Selection - Only show for Smart Home category */}
           {selectedCategory === "smart-home" && selectedSubcategory && (
-            <Card className="border-purple-200 bg-purple-50/30">
+            <Card ref={productTypesRef} className="border-purple-200 bg-purple-50/30">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <ToggleLeft className="w-5 h-5 text-purple-600" />
-                  <span>Select Product Types</span>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ToggleLeft className="w-5 h-5 text-purple-600" />
+                    <span>Select Product Types</span>
+                  </div>
+                  <Sheet open={showDetailFilter} onOpenChange={setShowDetailFilter}>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                        <Filter className="w-4 h-4" />
+                        <span>Detail Filter</span>
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-[500px] sm:w-[600px]">
+                      <SheetHeader>
+                        <SheetTitle className="flex items-center space-x-2">
+                          <Filter className="h-5 w-5" />
+                          <span>Data Filters</span>
+                        </SheetTitle>
+                        <SheetDescription>
+                          Choose which products, brands, and data sources to include in your analysis
+                        </SheetDescription>
+                      </SheetHeader>
+                      
+                      <ScrollArea className="h-[calc(100vh-120px)] mt-6">
+                        <div className="space-y-6">
+                          {/* Data Sources */}
+                          <div>
+                            <h3 className="font-medium mb-3">Data Sources</h3>
+                            <div className="space-y-2">
+                              {detailFilters.dataSources.map((source) => (
+                                <div key={source.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={source.id}
+                                    checked={source.checked}
+                                    onCheckedChange={() => handleDetailFilterChange('dataSources', source.id)}
+                                  />
+                                  <label htmlFor={source.id} className="text-sm font-medium cursor-pointer">
+                                    {source.name}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <Separator />
+
+                          {/* Top Brands Filter */}
+                          <div>
+                            <h3 className="font-medium mb-3">Top Brands Filter</h3>
+                            <div className="space-y-3">
+                              {detailFilters.topBrands.map((brand) => (
+                                <div key={brand.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div className="flex items-center space-x-3">
+                                    <Checkbox
+                                      id={brand.id}
+                                      checked={true}
+                                      onCheckedChange={() => {}}
+                                    />
+                                    <label htmlFor={brand.id} className="text-sm font-medium cursor-pointer">
+                                      {brand.name}
+                                    </label>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs">
+                                    {brand.percentage}%
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <Separator />
+
+                          {/* Sales Ranking Filter */}
+                          <div>
+                            <h3 className="font-medium mb-3">Sales Ranking Filter</h3>
+                            <div className="p-3 border rounded-lg bg-gray-50">
+                              <div className="font-medium text-sm mb-1">{detailFilters.salesRanking.filter}</div>
+                              <div className="text-xs text-gray-600">{detailFilters.salesRanking.description}</div>
+                            </div>
+                          </div>
+
+                          <Separator />
+
+                          {/* Selected Data Scope */}
+                          <div>
+                            <h3 className="font-medium mb-3">Selected Data Scope</h3>
+                            <div className="text-sm text-gray-600 mb-4">
+                              Preview of your research dataset. Your analysis project will be based on this filtered selection.
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="p-3 bg-blue-50 rounded-lg">
+                                <div className="text-2xl font-bold text-blue-600">{detailFilters.sampleData.products}</div>
+                                <div className="text-xs text-gray-600">Products</div>
+                              </div>
+                              <div className="p-3 bg-green-50 rounded-lg">
+                                <div className="text-2xl font-bold text-green-600">{detailFilters.sampleData.brands}</div>
+                                <div className="text-xs text-gray-600">Brands</div>
+                              </div>
+                              <div className="p-3 bg-purple-50 rounded-lg">
+                                <div className="text-2xl font-bold text-purple-600">{detailFilters.sampleData.reviews.toLocaleString()}</div>
+                                <div className="text-xs text-gray-600">Reviews</div>
+                              </div>
+                              <div className="p-3 bg-orange-50 rounded-lg">
+                                <div className="text-2xl font-bold text-orange-600">{detailFilters.sampleData.avgSalesPerMonth}</div>
+                                <div className="text-xs text-gray-600">Avg Sales/Month</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </ScrollArea>
+
+                      <div className="flex justify-between pt-4 border-t">
+                        <Button variant="outline" onClick={resetDetailFilters} className="flex items-center space-x-2">
+                          <RefreshCw className="w-4 h-4" />
+                          <span>Reset Filters</span>
+                        </Button>
+                        <Button onClick={applyDetailFilters} className="bg-black hover:bg-gray-800 text-white">
+                          Apply Filters
+                        </Button>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -490,10 +688,10 @@ export default function OnboardingPage() {
 
           {/* Chart Selection */}
           {selectedCategory && selectedSubcategory && (
-            <Card className="border-orange-200 bg-orange-50/30">
+            <Card ref={chartsRef} className="border-orange-200 bg-orange-50/30">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <BarChart3 className="w-5 h-5 text-orange-600" />
+                  <BarChart3 className="w-5 w-5 text-orange-600" />
                   <span>Select Charts to Generate</span>
                 </CardTitle>
               </CardHeader>
@@ -526,44 +724,44 @@ export default function OnboardingPage() {
           {selectedCategory && selectedSubcategory && selectedCharts.length > 0 && (
             <Card className="border-green-200 bg-green-50/30">
               <CardHeader>
-                <CardTitle className="text-green-800">Data Preview</CardTitle>
+                <CardTitle className="text-green-800">Selected Data Scope</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <Database className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">Product Data</div>
-                      <div className="text-xs text-gray-600">~1,200-2,500 products</div>
-                    </div>
+                <div className="text-sm text-gray-600 mb-4">
+                  Preview of your research dataset. Your analysis project will be based on this filtered selection.
+                </div>
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">225</div>
+                    <div className="text-xs text-gray-600">Products</div>
                   </div>
-
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <Users className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">Customer Reviews</div>
-                      <div className="text-xs text-gray-600">~15,000-50,000 reviews</div>
-                    </div>
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">9</div>
+                    <div className="text-xs text-gray-600">Brands</div>
                   </div>
-
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <Clock className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">Estimated Processing Time</div>
-                      <div className="text-xs text-gray-600">15-20 minutes</div>
-                    </div>
+                  <div className="p-3 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">228,011</div>
+                    <div className="text-xs text-gray-600">Reviews</div>
+                  </div>
+                  <div className="p-3 bg-orange-50 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">337</div>
+                    <div className="text-xs text-gray-600">Avg Sales/Month</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3 p-4 bg-green-100 rounded-lg">
+                  <div className="p-2 bg-green-200 rounded-lg">
+                    <Clock className="w-4 h-4 text-green-700" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm text-green-800">Estimated Processing Time</div>
+                    <div className="text-xs text-green-600">3-7 minutes</div>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-green-200">
                   <div className="flex justify-end">
-                    <Button onClick={handleStartAnalysis} size="lg" className="bg-green-600 hover:bg-green-700">
+                    <Button onClick={handleStartAnalysis} size="lg" className="bg-black hover:bg-gray-800 text-white">
                       Start Data Collection
                       <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>

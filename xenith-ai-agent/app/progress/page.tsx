@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Database, Search, BarChart3, Users, CheckCircle, Clock, ArrowRight, Edit2 } from "lucide-react"
+import { Database, Search, BarChart3, Users, CheckCircle, Clock, ArrowRight, Edit2, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 const analysisSteps = [
@@ -145,6 +145,15 @@ export default function ProgressPage() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push("/onboarding")}
+                className="text-gray-600"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
               {isEditingName ? (
                 <Input
                   value={projectName}
@@ -164,10 +173,16 @@ export default function ProgressPage() {
               )}
               <p className="text-sm text-gray-600">Smart Home &gt; Dimmer &amp; Light Switches</p>
             </div>
-            <Badge variant="outline">
-              <Clock className="w-3 h-3 mr-1" />
-              {completed ? "Completed" : `${Math.ceil((100 - progress) / 5)} min remaining`}
-            </Badge>
+            {completed ? (
+              <Button onClick={handleViewResults} className="bg-black hover:bg-gray-800 text-white">
+                View Results
+              </Button>
+            ) : (
+              <Badge variant="outline">
+                <Clock className="w-3 h-3 mr-1" />
+                {Math.ceil((100 - progress) / 20)} min remaining
+              </Badge>
+            )}
           </div>
         </div>
       </header>
@@ -277,9 +292,8 @@ export default function ProgressPage() {
                       </p>
                     </div>
                   </div>
-                  <Button onClick={handleViewResults} size="lg" className="bg-green-600 hover:bg-green-700">
+                  <Button onClick={handleViewResults} size="lg" className="bg-black hover:bg-gray-800 text-white">
                     View Results
-                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
               </CardContent>

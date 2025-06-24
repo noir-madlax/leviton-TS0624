@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,9 +10,10 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { MessageSquare, TrendingUp, BarChart3, PieChart, Lightbulb, Send, Loader2, X, Clock, User } from 'lucide-react'
+import { MessageSquare, TrendingUp, BarChart3, PieChart, Lightbulb, Send, Loader2, X, Clock, User, Edit3, ArrowLeft } from 'lucide-react'
 import { LutronPieChart } from "@/components/charts/lutron-pie-chart"
 import { getPriceSegments } from "@/lib/lutron-data"
+import { MemoryEditor } from "@/components/ui/memory-editor"
 
 interface Message {
   id: string
@@ -97,48 +99,21 @@ function AnalyzingLoader({ stage, progress }: AnalyzingLoaderProps) {
   )
 }
 
-// User memory data
-const userMemories = [
-  {
-    id: "1",
-    content: "I want to see market share data presented in pie chart format, showing percentage breakdown of total revenue for the past year",
-    timestamp: "2024-01-15",
-    category: "Visualization Preference"
-  },
-  {
-    id: "2", 
-    content: "Focus analysis on Lutron brand performance across different price segments",
-    timestamp: "2024-01-10",
-    category: "Brand Focus"
-  },
-  {
-    id: "3",
-    content: "Include competitive positioning analysis when showing market data",
-    timestamp: "2024-01-08",
-    category: "Analysis Scope"
-  },
-  {
-    id: "4",
-    content: "Prefer detailed executive summaries with strategic recommendations",
-    timestamp: "2024-01-05",
-    category: "Report Format"
-  },
-  {
-    id: "5",
-    content: "Show both volume and revenue metrics when analyzing market segments",
-    timestamp: "2024-01-03",
-    category: "Metrics Preference"
-  }
-]
+
 
 export default function ChatPage({ params }: { params: { id: string } }) {
+  const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [showTopics, setShowTopics] = useState(false)
   const [currentStage, setCurrentStage] = useState("")
   const [currentProgress, setCurrentProgress] = useState(0)
-  const [showMemory, setShowMemory] = useState(false)
+  
+  // Get project info
+  const projectId = params.id
+  const projectName = projectId === "1" ? "Customer Pain Points Analysis" : "Dimmer Switch Price Analysis"
+
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const executiveSummaryRef = useRef<HTMLDivElement>(null)
@@ -378,48 +353,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     return (
       <span className="text-gray-700 leading-relaxed">
         <TypewriterText text={parts[0]} speed={10} />
-        <Sheet open={showMemory} onOpenChange={setShowMemory}>
-          <SheetTrigger asChild>
-            <button className="text-blue-600 hover:text-blue-800 underline font-medium">
-              According to my memory
-            </button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-            <SheetHeader>
-              <SheetTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span>User Memory</span>
-              </SheetTitle>
-              <SheetDescription>
-                Your previous preferences and requirements that I remember
-              </SheetDescription>
-            </SheetHeader>
-            <ScrollArea className="h-[calc(100vh-120px)] mt-6">
-              <div className="space-y-4">
-                {userMemories.map((memory) => (
-                  <Card key={memory.id} className="border-l-4 border-l-blue-500">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-xs">
-                          {memory.category}
-                        </Badge>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {memory.timestamp}
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {memory.content}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
+        <MemoryEditor>
+          <button className="text-blue-600 hover:text-blue-800 underline font-medium">
+            According to my memory
+          </button>
+        </MemoryEditor>
         <TypewriterText 
           text={parts[1]} 
           speed={10} 
@@ -455,6 +393,16 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={() => router.push(`/project/${projectId}`)}
+                className="text-gray-600"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+              <Separator orientation="vertical" className="h-4" />
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowTopics(!showTopics)}
                 className="text-gray-600"
               >
@@ -462,7 +410,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                 Topics
               </Button>
               <Separator orientation="vertical" className="h-4" />
-              <h1 className="text-lg font-semibold">AI Market Research Assistant</h1>
+              <div>
+                <h1 className="text-lg font-semibold">AI Market Research Assistant</h1>
+                <p className="text-sm text-gray-600">{projectName}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -504,9 +455,9 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                   <div className={`flex max-w-3xl ${message.isUser ? 'flex-row-reverse' : 'flex-row'} space-x-3`}>
                     <Avatar className="w-8 h-8 flex-shrink-0">
                       {message.isUser ? (
-                        <AvatarFallback className="bg-blue-600 text-white">U</AvatarFallback>
+                        <AvatarFallback className="bg-blue-600 text-white">JD</AvatarFallback>
                       ) : (
-                        <AvatarFallback className="bg-gray-600 text-white">AI</AvatarFallback>
+                        <AvatarFallback className="bg-gray-600 text-white">X</AvatarFallback>
                       )}
                     </Avatar>
                     <div className={`flex-1 ${message.isUser ? 'mr-3' : 'ml-3'}`}>
@@ -647,7 +598,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               <Button
                 onClick={handleSendMessage}
                 disabled={!input.trim() || isLoading}
-                className="px-6 bg-blue-600 hover:bg-blue-700"
+                className="px-6 bg-black hover:bg-gray-800 text-white"
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
