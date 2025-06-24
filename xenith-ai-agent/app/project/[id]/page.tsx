@@ -23,6 +23,8 @@ import {
   BarChart3,
 } from "lucide-react"
 import Link from "next/link"
+import { ReviewPanel } from "@/components/ui/review-panel"
+import { useReviewPanel } from "@/lib/review-panel-context"
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
@@ -82,7 +84,8 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     return {}
   }, [projectId, dashboardData])
 
-
+  // Review panel context
+  const reviewPanel = useReviewPanel()
 
   // Get project info based on ID
   const getProjectInfo = () => {
@@ -120,6 +123,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50/50">
       {/* Header */}
       <header className="border-b bg-white">
@@ -198,34 +202,6 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                 <TabsTrigger value="categories">Critical Categories</TabsTrigger>
                 <TabsTrigger value="competitors">Competitor Matrix</TabsTrigger>
               </TabsList>
-{/* 
-              <TabsContent value="use-cases" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle>What use cases do customers complain about the most?</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          Use Case Analysis filtered by top negative review count
-                        </p>
-                      </div>
-                      <PinButton chart={{
-                        id: "use-case-analysis",
-                        title: "Use Case Analysis",
-                        projectName: "Customer Pain Points Analysis",
-                        projectId: "1",
-                        lastUpdated: "2025-05-20",
-                        autoUpdate: "weekly",
-                        type: "bar",
-                        isPinned: false
-                      }} />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CategoryUseCaseBar data={projectData.useCaseData as any || []} />
-                  </CardContent>
-                </Card>
-              </TabsContent> */}
 
               <TabsContent value="categories" className="space-y-6">
                 <Card>
@@ -433,7 +409,17 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         )}
       </div>
 
-
     </div>
+
+    {/* Review Panel (opens when a matrix cell is clicked) */}
+    <ReviewPanel
+      isOpen={reviewPanel.isOpen}
+      onClose={reviewPanel.closePanel}
+      reviews={reviewPanel.reviews}
+      title={reviewPanel.title}
+      subtitle={reviewPanel.subtitle}
+      showFilters={reviewPanel.showFilters}
+    />
+    </>
   )
 }

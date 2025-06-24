@@ -133,7 +133,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [projectId, setProjectId] = useState<string>("")
   
   // Get project info
-  const projectName = projectId === "1" ? "Customer Pain Points Analysis" : "Dimmer Switch Price Analysis"
+  const projectName = projectId === "1" ? "Customer Pain Points Analysis" : "New Project"
 
   // Get project ID from params
   useEffect(() => {
@@ -921,7 +921,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                           <PinButton chart={{
                                             id: "brand-price-distribution",
                                             title: "Brand Price Distribution Analysis",
-                                            projectName: "Dimmer Switch Price Analysis",
+                                            projectName: "New Project",
                                             projectId: "2",
                                             lastUpdated: "2025-05-18",
                                             autoUpdate: "monthly",
@@ -942,7 +942,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                           <PinButton chart={{
                                             id: "revenue-analysis", 
                                             title: "Revenue Analysis by Price Segment",
-                                            projectName: "Dimmer Switch Price Analysis",
+                                            projectName: "New Project",
                                             projectId: "2",
                                             lastUpdated: "2025-05-17",
                                             autoUpdate: null,
@@ -982,7 +982,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                           <PinButton chart={{
                                             id: "lutron-price-segments",
                                             title: "Lutron Price Segment Market Share",
-                                            projectName: "Dimmer Switch Price Analysis",
+                                            projectName: "New Project",
                                             projectId: "2",
                                             lastUpdated: "2025-05-17",
                                             autoUpdate: "monthly",
