@@ -198,7 +198,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                 <TabsTrigger value="categories">Critical Categories</TabsTrigger>
                 <TabsTrigger value="competitors">Competitor Matrix</TabsTrigger>
               </TabsList>
-
+{/* 
               <TabsContent value="use-cases" className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -225,7 +225,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                     <CategoryUseCaseBar data={projectData.useCaseData as any || []} />
                   </CardContent>
                 </Card>
-              </TabsContent>
+              </TabsContent> */}
 
               <TabsContent value="categories" className="space-y-6">
                 <Card>

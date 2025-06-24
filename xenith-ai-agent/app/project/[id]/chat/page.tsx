@@ -27,6 +27,8 @@ import { ScatterChart } from "@/components/charts/scatter-chart"
 import { PriceTypeSelector, type PriceType } from "@/components/price-type-selector"
 import { MetricTypeSelector, type MetricType } from "@/components/metric-type-selector"
 import { fetchDashboardData } from "@/lib/data"
+import { CategoryTrendLineChart } from "@/components/charts/category-trend-line-chart"
+import { generateCategoryTrendData } from "@/lib/categoryTrendData"
 
 interface Message {
   id: string
@@ -44,7 +46,7 @@ interface Message {
   initialResponseComplete?: boolean
   insightTexts?: string[]
   supportingChartsLoading?: boolean
-  chartType?: 'useCase' | 'categories' | 'competitors' | 'lutron' | 'brandPriceDistribution' | 'priceVsRevenue' | 'lutronPieChart'
+  chartType?: 'useCase' | 'categories' | 'competitors' | 'lutron' | 'brandPriceDistribution' | 'priceVsRevenue' | 'lutronPieChart' | 'categoryTrend'
   isHistorical?: boolean
 }
 
@@ -141,16 +143,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }, [params])
 
   
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const executiveSummaryRef = useRef<HTMLDivElement>(null)
-  const supportingChartsRef = useRef<HTMLDivElement>(null)
-  const keyInsightsRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const executiveSummaryRef = useRef<HTMLDivElement | null>(null)
+  const supportingChartsRef = useRef<HTMLDivElement | null>(null)
+  const keyInsightsRef = useRef<HTMLDivElement | null>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
@@ -186,43 +188,20 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       const negativeCategories = getTopNegativeCategories('dimmer', 10)
       const competitorData = getCompetitorAnalysisData()
       
+      const categoryTrendData = generateCategoryTrendData(negativeCategories)
+      
       setProject1Data({
         useCaseData,
         negativeCategories,
-        competitorData
+        competitorData,
+        categoryTrendData,
       })
 
       // Initialize historical conversation for Project 1
       const historicalMessages: Message[] = [
         {
-          id: "hist-1",
-          content: "What use cases do customers complain about the most?",
-          isUser: true,
-          timestamp: new Date(Date.now() - 300000), // 5 minutes ago
-          isHistorical: true
-        },
-        {
-          id: "hist-2",
-          content: "",
-          isUser: false,
-          timestamp: new Date(Date.now() - 280000),
-          isHistorical: true,
-          hasChart: true,
-          chartType: 'useCase',
-          showExecutiveSummary: true,
-          showSupportingCharts: true,
-          showKeyInsights: true,
-          keyInsights: [
-            "Installation and setup emerges as the top pain point, with customers frequently reporting difficulties with wiring and configuration processes.",
-            "App connectivity issues significantly impact user satisfaction, with many users experiencing problems connecting devices to mobile applications.",
-            "Compatibility concerns with existing electrical systems create barriers to adoption, particularly in older homes with non-standard wiring.",
-            "Remote control functionality problems affect daily usability, with users reporting intermittent connectivity and response issues."
-          ],
-          executiveSummary: "Analysis of customer feedback reveals that technical implementation challenges dominate user complaints in the dimmer switch category. The data shows a clear pattern where customers struggle most with the initial setup and ongoing connectivity, rather than core lighting functionality. This suggests opportunities for improved installation guides, better app design, and enhanced compatibility testing."
-        },
-        {
           id: "hist-3",
-          content: "How about product features?",
+          content: "What product features do customers complain about the most?",
           isUser: true,
           timestamp: new Date(Date.now() - 200000), // 3+ minutes ago
           isHistorical: true
@@ -248,13 +227,39 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         },
         {
           id: "hist-5",
+          content: "What are the trends for these categories over the last year?",
+          isUser: true,
+          timestamp: new Date(Date.now() - 150000), // 2.5 minutes ago
+          isHistorical: true
+        },
+        {
+          id: "hist-6",
+          content: "",
+          isUser: false,
+          timestamp: new Date(Date.now() - 130000),
+          isHistorical: true,
+          hasChart: true,
+          chartType: 'categoryTrend',
+          showExecutiveSummary: true,
+          showSupportingCharts: true,
+          showKeyInsights: true,
+          keyInsights: [
+            "Product Lifespan complaints show a 25% increase in the last twelve months, indicating long-term reliability is deteriorating in consumer perception.",
+            "Network Connection Stability issues peaked mid-year but have declined 10% following recent firmware updates.",
+            "Product Reliability complaints remain consistently high with only marginal improvement, suggesting systemic quality concerns persist.",
+            "Dimming Control Performance shows seasonal fluctuation with a modest upward trend, pointing to unresolved usability issues."
+          ],
+          executiveSummary: "Overall trend analysis demonstrates that performance-related categories continue to accumulate negative feedback over time. The persistent rise in Product Lifespan and Reliability complaints underscores the need for design and quality improvements. Conversely, targeted software updates appear effective in reducing connectivity-related issues."
+        },
+        {
+          id: "hist-7",
           content: "Show that for Leviton D215S, Leviton DSL06, Lutron Caseta Diva",
           isUser: true,
           timestamp: new Date(Date.now() - 100000), // 1+ minutes ago
           isHistorical: true
         },
         {
-          id: "hist-6",
+          id: "hist-8",
           content: "",
           isUser: false,
           timestamp: new Date(Date.now() - 80000),
@@ -878,6 +883,23 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                             targetProducts={project1Data.competitorData?.targetProducts || []} 
                                           />
                                         </div>
+                                      </div>
+                                    )}
+                                    {message.chartType === 'categoryTrend' && project1Data?.categoryTrendData && (
+                                      <div className="relative" id="category-trend">
+                                        <div className="flex justify-end mb-2">
+                                          <PinButton chart={{
+                                            id: "category-trend",
+                                            title: "Trend of Top Pain Points (Negative Mentions)",
+                                            projectName: "Customer Pain Points Analysis",
+                                            projectId: "1",
+                                            lastUpdated: "2025-05-20",
+                                            autoUpdate: "weekly",
+                                            type: "line",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <CategoryTrendLineChart data={project1Data.categoryTrendData} />
                                       </div>
                                     )}
                                     {message.chartType === 'lutron' && (

@@ -76,7 +76,7 @@ export function CategoryPainPointsBar({ data, productType = 'dimmer', onProductT
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Top 10 Most Critical Categories by Negative Reviews Count 🖱️
+          Top 10 Most Critical Pain Points by Negative Mentions 🖱️
           <ComplaintLegend />
         </CardTitle>
         <div className="flex items-center justify-between">
@@ -128,10 +128,12 @@ export function CategoryPainPointsBar({ data, productType = 'dimmer', onProductT
                 fontSize={12}
               />
               <YAxis
-                label={{ 
-                  value: 'Negative Reviews Count', 
-                  angle: -90, 
-                  position: 'insideLeft'
+                label={{
+                  value: 'Negative Mentions',
+                  angle: -90,
+                  position: 'insideLeft',
+                  offset: -10,
+                  dy: 40,
                 }}
                 fontSize={12}
               />
