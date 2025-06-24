@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CategoryFeedback, ProductType, getAvailableProductTypes } from '@/lib/categoryFeedback'
-import { getSatisfactionColor, SatisfactionLegend } from '@/lib/satisfactionColors'
+import { CategoryFeedback, ProductType } from '@/lib/categoryFeedback'
+import { ComplaintLegend } from '@/lib/satisfactionColors'
 import { useReviewPanel } from '@/lib/review-panel-context'
 
 interface CategoryPainPointsBarProps {
@@ -17,41 +17,9 @@ interface CategoryPainPointsBarProps {
   }
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload
-    return (
-      <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg max-w-xs">
-        <p className="font-semibold text-gray-800">{data.category}</p>
-        <p className="text-sm text-gray-600">Type: {data.categoryType}</p>
-        <p className="text-sm text-red-600 font-semibold">Negative Reviews: {data.negativeCount}</p>
-        <p className="text-sm text-blue-600">Total Reviews: {data.totalReviews}</p>
-        <p className="text-sm text-orange-600">Negative Rate: {data.negativeRate}%</p>
-        <p className="text-sm text-green-600">Satisfaction Rate: {data.satisfactionRate}%</p>
-        <div className="mt-2">
-          <p className="text-xs text-gray-500">Top Issue Details:</p>
-          {data.topNegativeAspects.slice(0, 3).map((aspect: string, index: number) => (
-            <p key={index} className="text-xs text-gray-600">• {aspect}</p>
-          ))}
-          {data.topNegativeReasons && data.topNegativeReasons.length > 0 && (
-            <div className="mt-2">
-              <p className="text-xs text-gray-500">Top Issue Reasons:</p>
-              {data.topNegativeReasons.slice(0, 3).map((reason: string, index: number) => (
-                <p key={index} className="text-xs text-red-600">• {reason}</p>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-  return null
-}
-
 export function CategoryPainPointsBar({ data, productType = 'dimmer', onProductTypeChange, reviewData }: CategoryPainPointsBarProps) {
   const [isMounted, setIsMounted] = useState(false)
   const [selectedProductType, setSelectedProductType] = useState<ProductType>(productType)
-  const productTypes = getAvailableProductTypes()
   const { openPanel } = useReviewPanel()
 
   useEffect(() => {
@@ -63,9 +31,19 @@ export function CategoryPainPointsBar({ data, productType = 'dimmer', onProductT
     setSelectedProductType(productType)
   }, [productType])
 
-  // Use satisfaction rate for consistent coloring across all charts
-  const getBarColor = (item: CategoryFeedback) => {
-    return getSatisfactionColor(item.satisfactionRate)
+  // dynamic thresholds based on dataset distribution
+  const satisfactionRates = data.map(d => d.satisfactionRate).sort((a,b)=>a-b)
+  let poorThreshold = 50, averageThreshold = 65
+  if (satisfactionRates.length >= 3) {
+    poorThreshold = satisfactionRates[Math.floor(satisfactionRates.length/3)]
+    averageThreshold = satisfactionRates[Math.floor((satisfactionRates.length*2)/3)]
+  }
+
+  const getBarColor = (item: CategoryFeedback): string => {
+    const rate = item.satisfactionRate
+    if (rate >= averageThreshold) return '#fbbf24'
+    if (rate >= poorThreshold) return '#f97316'
+    return '#dc2626'
   }
 
   // 数据已经按负面评价数排序，直接使用前10个
@@ -99,7 +77,7 @@ export function CategoryPainPointsBar({ data, productType = 'dimmer', onProductT
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           Top 10 Most Critical Categories by Negative Reviews Count 🖱️
-          <SatisfactionLegend />
+          <ComplaintLegend />
         </CardTitle>
         <div className="flex items-center justify-between">
           <CardDescription>Categories ranked by absolute negative review count</CardDescription>
@@ -157,7 +135,20 @@ export function CategoryPainPointsBar({ data, productType = 'dimmer', onProductT
                 }}
                 fontSize={12}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={({active,payload,label}:any)=>{
+                if(active && payload && payload.length){
+                  const data = payload[0].payload
+                  return (
+                    <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg max-w-xs">
+                      <p className="font-semibold text-gray-800">{data.category}</p>
+                      <p className="text-sm text-gray-600">Type: {data.categoryType}</p>
+                      <p className="text-sm font-semibold" style={{color:getBarColor(data)}}>Negative Reviews: {data.negativeCount}</p>
+                      <p className="text-sm text-green-600">Satisfaction Rate: {data.satisfactionRate}%</p>
+                    </div>
+                  )
+                }
+                return null
+              }} />
               <Bar 
                 dataKey="negativeCount" 
                 radius={[4, 4, 0, 0]} 

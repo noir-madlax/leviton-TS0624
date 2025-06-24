@@ -39,6 +39,42 @@ export const SATISFACTION_COLOR_SCHEME: SatisfactionColorScheme[] = [
   { color: '#dc2626', label: 'Very Poor', range: '0-24%' }
 ];
 
+//================ Complaint-centric color utilities ================
+
+// Get color focusing on dissatisfaction (average or worse)
+export const getComplaintColor = (satisfactionRate: number): string => {
+  if (satisfactionRate >= 50) return '#fbbf24'; // Yellow – Average (>=50%)
+  if (satisfactionRate >= 35) return '#f97316'; // Orange – Poor (35-49%)
+  return '#dc2626'; // Dark red – Critical (<35%)
+};
+
+// Complaint level text (no above-average levels)
+export const getComplaintLevel = (satisfactionRate: number): string => {
+  if (satisfactionRate >= 50) return 'Average';
+  if (satisfactionRate >= 35) return 'Poor';
+  return 'Very Poor';
+};
+
+export const COMPLAINT_COLOR_SCHEME: SatisfactionColorScheme[] = [
+  { color: '#fbbf24', label: 'Average', range: '50-100%' },
+  { color: '#f97316', label: 'Poor', range: '35-49%' },
+  { color: '#dc2626', label: 'Very Poor', range: '0-34%' },
+];
+
+export const ComplaintLegend: React.FC<{ className?: string }> = ({ className = "" }) => (
+  <div className={`flex items-center gap-2 text-sm ${className}`}>
+    {COMPLAINT_COLOR_SCHEME.map((scheme, index) => (
+      <div key={index} className="flex items-center gap-1">
+        <div
+          className="w-3 h-3 rounded"
+          style={{ backgroundColor: scheme.color }}
+        ></div>
+        <span className="text-xs">{scheme.label}</span>
+      </div>
+    ))}
+  </div>
+);
+
 // Compact legend component for chart headers
 interface SatisfactionLegendProps {
   className?: string;

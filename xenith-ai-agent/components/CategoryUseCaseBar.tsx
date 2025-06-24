@@ -5,12 +5,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { UseCaseFeedback, ProductType } from '@/lib/categoryFeedback';
-import { getSatisfactionColor, getSatisfactionLevel, SatisfactionLegend } from '@/lib/satisfactionColors';
+import { getComplaintLevel, ComplaintLegend } from '@/lib/satisfactionColors';
 import { useReviewPanel } from '@/lib/review-panel-context';
+import { ProductType } from '@/lib/categoryFeedback';
 
 interface UseCaseData {
   category: string;
+  useCase: string;
   displayName: string;
   totalMentions: number;
   satisfactionRate: number;
@@ -25,83 +26,15 @@ interface CategoryUseCaseBarProps {
   description?: string;
   productType?: 'dimmer' | 'switch';
   onProductTypeChange?: (type: 'dimmer' | 'switch') => void;
-  reviewData?: any[];
+  reviewData?: {
+    reviewsByCategory?: Record<string, any[]>;
+  };
 }
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg min-w-[300px]">
-        <p className="font-semibold text-gray-900 mb-2">{data.useCase}</p>
-        
-        {/* 基本统计信息 */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div>
-            <p className="text-sm text-gray-600">Total Mentions:</p>
-            <p className="font-semibold">{data.totalMentions}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Satisfaction Rate:</p>
-            <div className="flex items-center gap-2">
-              <p className="font-semibold">{data.satisfactionRate}%</p>
-              <Badge 
-                variant="outline" 
-                style={{ 
-                  borderColor: getSatisfactionColor(data.satisfactionRate),
-                  color: getSatisfactionColor(data.satisfactionRate)
-                }}
-              >
-                {getSatisfactionLevel(data.satisfactionRate)}
-              </Badge>
-            </div>
-          </div>
-        </div>
-
-        {/* 正负面统计 */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div>
-            <p className="text-sm text-green-600">Positive Reviews: {data.positiveCount}</p>
-          </div>
-          <div>
-            <p className="text-sm text-red-600">Negative Reviews: {data.negativeCount}</p>
-          </div>
-        </div>
-
-        {/* Top满意原因 */}
-        {data.topSatisfactionReasons && data.topSatisfactionReasons.length > 0 && (
-          <div className="mb-3">
-            <p className="text-sm font-medium text-green-700 mb-1">Top Satisfaction Reasons:</p>
-            <ul className="text-xs text-green-600 space-y-1">
-              {data.topSatisfactionReasons.slice(0, 3).map((reason: string, index: number) => (
-                <li key={index} className="pl-2 border-l-2 border-green-200">• {reason}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Top不满意原因 */}
-        {data.topGapReasons && data.topGapReasons.length > 0 && (
-          <div className="mb-3">
-            <p className="text-sm font-medium text-red-700 mb-1">Top Gap Reasons:</p>
-            <ul className="text-xs text-red-600 space-y-1">
-              {data.topGapReasons.slice(0, 3).map((reason: string, index: number) => (
-                <li key={index} className="pl-2 border-l-2 border-red-200">• {reason}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-      </div>
-    );
-  }
-  return null;
-};
 
 export default function CategoryUseCaseBar({ 
   data, 
-  title = "Use Case Satisfaction Analysis",
-  description = "Bars show mention count, colors indicate satisfaction levels",
+  title = "Use Case Complaint Analysis",
+  description = "Bars show negative mention count, colors indicate dissatisfaction levels",
   productType = 'dimmer',
   onProductTypeChange,
   reviewData
@@ -124,13 +57,30 @@ export default function CategoryUseCaseBar({
     );
   }
   
-  const chartData = data.map(item => ({
-    ...item,
-    // 用于X轴显示的短名称
-    displayName: item.useCase.length > 15 ? 
-      item.useCase.substring(0, 15) + '...' : 
-      item.useCase
-  }));
+  // Sort by complaints (negativeCount) descending to surface most problematic use cases first
+  const chartData = [...data]
+    .sort((a, b) => b.negativeCount - a.negativeCount)
+    .map(item => ({
+      ...item,
+      // 用于X轴显示的短名称
+      displayName: item.useCase.length > 15 ? 
+        item.useCase.substring(0, 15) + '...' : 
+        item.useCase
+    }));
+
+  // ----- dynamic color thresholds -----
+  const satisfactionRates = chartData.map(i => i.satisfactionRate).sort((a, b) => a - b);
+  let poorThreshold = 50, averageThreshold = 65; // defaults
+  if (satisfactionRates.length >= 3) {
+    poorThreshold = satisfactionRates[Math.floor(satisfactionRates.length / 3)];
+    averageThreshold = satisfactionRates[Math.floor((satisfactionRates.length * 2) / 3)];
+  }
+
+  const getBarColor = (rate: number) => {
+    if (rate >= averageThreshold) return '#fbbf24'; // Average (yellow)
+    if (rate >= poorThreshold) return '#f97316'; // Poor (orange)
+    return '#dc2626'; // Very Poor (red)
+  };
 
   const handleBarClick = (data: any, index: number) => {
     if (data && data.displayName && reviewData?.reviewsByCategory) {
@@ -153,12 +103,74 @@ export default function CategoryUseCaseBar({
     }
   }
 
+  // define localized tooltip for dynamic colors
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg min-w-[300px]">
+          <p className="font-semibold text-gray-900 mb-2">{data.useCase}</p>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div>
+              <p className="text-sm text-gray-600">Total Mentions:</p>
+              <p className="font-semibold">{data.totalMentions}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Satisfaction Rate:</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold">{data.satisfactionRate}%</p>
+                <Badge 
+                  variant="outline" 
+                  style={{ 
+                    borderColor: getBarColor(data.satisfactionRate),
+                    color: getBarColor(data.satisfactionRate)
+                  }}
+                >
+                  {getComplaintLevel(data.satisfactionRate)}
+                </Badge>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div>
+              <p className="text-sm text-green-600">Positive Reviews: {data.positiveCount}</p>
+            </div>
+            <div>
+              <p className="text-sm text-red-600">Negative Reviews: {data.negativeCount}</p>
+            </div>
+          </div>
+          {data.topSatisfactionReasons && data.topSatisfactionReasons.length > 0 && (
+            <div className="mb-3">
+              <p className="text-sm font-medium text-green-700 mb-1">Top Satisfaction Reasons:</p>
+              <ul className="text-xs text-green-600 space-y-1">
+                {data.topSatisfactionReasons.slice(0, 3).map((reason: string, index: number) => (
+                  <li key={index} className="pl-2 border-l-2 border-green-200">• {reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {data.topGapReasons && data.topGapReasons.length > 0 && (
+            <div className="mb-3">
+              <p className="text-sm font-medium text-red-700 mb-1">Top Gap Reasons:</p>
+              <ul className="text-xs text-red-600 space-y-1">
+                {data.topGapReasons.slice(0, 3).map((reason: string, index: number) => (
+                  <li key={index} className="pl-2 border-l-2 border-red-200">• {reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           {title}
-          <SatisfactionLegend />
+          <ComplaintLegend />
         </CardTitle>
         <div className="flex items-center justify-between">
           <CardDescription>{description}</CardDescription>
@@ -172,11 +184,11 @@ export default function CategoryUseCaseBar({
                 Dimmer Switches
               </Button>
               <Button
-                variant={productType === 'light' ? 'default' : 'outline'}
+                variant={productType === 'switch' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => onProductTypeChange('light')}
+                onClick={() => onProductTypeChange('switch')}
               >
-                Light Switches
+                Switches
               </Button>
             </div>
           )}
@@ -209,18 +221,18 @@ export default function CategoryUseCaseBar({
                 fontSize={12}
               />
               <YAxis 
-                label={{ value: 'Total Mentions', angle: -90, position: 'insideLeft' }}
+                label={{ value: 'Negative Mentions', angle: -90, position: 'insideLeft' }}
                 fontSize={12}
               />
               <Tooltip content={<CustomTooltip />} />
               <Bar 
-                dataKey="totalMentions" 
+                dataKey="negativeCount" 
                 radius={[4, 4, 0, 0]} 
                 style={{ cursor: 'pointer' }}
                 onClick={handleBarClick}
               >
                 {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getSatisfactionColor(entry.satisfactionRate)} />
+                  <Cell key={`cell-${index}`} fill={getBarColor(entry.satisfactionRate)} />
                 ))}
               </Bar>
             </BarChart>
@@ -234,13 +246,13 @@ export default function CategoryUseCaseBar({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             {data.slice(0, 4).map((item, index) => (
               <div key={index} className="text-center">
-                <div className="text-lg font-bold" style={{color: getSatisfactionColor(item.satisfactionRate)}}>
+                <div className="text-lg font-bold" style={{color: getBarColor(item.satisfactionRate)}}>
                   {item.totalMentions}
                 </div>
                 <div className="text-sm text-gray-600 truncate" title={item.useCase}>
                   {item.useCase}
                 </div>
-                <div className="text-xs" style={{color: getSatisfactionColor(item.satisfactionRate)}}>
+                <div className="text-xs" style={{color: getBarColor(item.satisfactionRate)}}>
                   {item.satisfactionRate}% satisfaction
                 </div>
               </div>
