@@ -121,7 +121,7 @@ export default function ProgressPage() {
   }, [])
 
   const handleViewResults = () => {
-    router.push("/project/2")
+    router.push("/project/2/chat")
   }
 
   const handleNameEdit = () => {
@@ -175,7 +175,7 @@ export default function ProgressPage() {
             </div>
             {completed ? (
               <Button onClick={handleViewResults} className="bg-black hover:bg-gray-800 text-white">
-                View Results
+                Enter
               </Button>
             ) : (
               <Badge variant="outline">
@@ -293,7 +293,7 @@ export default function ProgressPage() {
                     </div>
                   </div>
                   <Button onClick={handleViewResults} size="lg" className="bg-black hover:bg-gray-800 text-white">
-                    View Results
+                    Enter
                   </Button>
                 </div>
               </CardContent>

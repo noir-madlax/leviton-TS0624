@@ -24,6 +24,7 @@ import {
   Calendar,
 } from "lucide-react"
 import Link from "next/link"
+import { PinButton } from "@/components/ui/pin-button"
 
 // Default project data - only 2 projects allowed
 const defaultProjects = [
@@ -166,11 +167,11 @@ export default function HomePage() {
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold text-gray-900">Xenith</h1>
             <div className="flex items-center space-x-2 text-gray-500">
-              <span className="text-xs">powered by</span>
+              <span className="text-[8px]">powered by</span>
               <img 
                 src="/logo-teamname-0617-scarlett.svg" 
                 alt="3PO Lab" 
-                className="h-3 w-auto opacity-60"
+                className="h-2.5 w-auto opacity-60"
               />
             </div>
           </div>
@@ -205,7 +206,7 @@ export default function HomePage() {
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Subscribed Charts</h3>
                 {pinnedCharts.length > 0 ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6">
                     {pinnedCharts.map((chart) => {
                       const ChartIcon = getChartIcon(chart.type)
                       return (
@@ -219,9 +220,9 @@ export default function HomePage() {
                                 <div className="text-xs text-gray-500">{chart.projectName}</div>
                               </div>
                               <div className="flex items-center space-x-1">
-                                <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
-                                  <Pin className="w-3 h-3 text-blue-600 fill-blue-600" />
-                                </Button>
+                                <div className="flex items-center space-x-1">
+                                  <PinButton chart={chart} />
+                                </div>
                                 <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
                                   <Settings className="w-3 h-3" />
                                 </Button>

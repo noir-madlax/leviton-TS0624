@@ -95,8 +95,8 @@ export function Sidebar({ projects, charts, collapsed, onToggle }: SidebarProps)
 
           <CollapsibleContent className="space-y-2 mt-2">
             {projects.map((project) => {
-              // For project 1, go directly to chat page
-              const linkHref = project.id === "1" ? `/project/${project.id}/chat` : `/project/${project.id}`
+              // For project 1 and 2, go directly to chat page
+              const linkHref = (project.id === "1" || project.id === "2") ? `/project/${project.id}/chat` : `/project/${project.id}`
               
               return (
                 <Link key={project.id} href={linkHref}>

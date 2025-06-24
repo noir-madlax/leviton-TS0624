@@ -21,6 +21,12 @@ import { CompetitorMatrix } from "@/components/charts/competitor-matrix"
 import { PinButton } from "@/components/ui/pin-button"
 import { getTopUseCases, getTopNegativeCategories } from "@/lib/categoryFeedback"
 import { getCompetitorAnalysisData } from "@/lib/competitorAnalysis"
+// Import Project 2 components and data
+import { PricingAnalysis } from "@/components/pricing-analysis"
+import { ScatterChart } from "@/components/charts/scatter-chart"
+import { PriceTypeSelector, type PriceType } from "@/components/price-type-selector"
+import { MetricTypeSelector, type MetricType } from "@/components/metric-type-selector"
+import { fetchDashboardData } from "@/lib/data"
 
 interface Message {
   id: string
@@ -38,7 +44,7 @@ interface Message {
   initialResponseComplete?: boolean
   insightTexts?: string[]
   supportingChartsLoading?: boolean
-  chartType?: 'useCase' | 'categories' | 'competitors' | 'lutron'
+  chartType?: 'useCase' | 'categories' | 'competitors' | 'lutron' | 'brandPriceDistribution' | 'priceVsRevenue' | 'lutronPieChart'
   isHistorical?: boolean
 }
 
@@ -110,7 +116,7 @@ function AnalyzingLoader({ stage, progress }: AnalyzingLoaderProps) {
 
 
 
-export default function ChatPage({ params }: { params: { id: string } }) {
+export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
@@ -119,10 +125,20 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [currentStage, setCurrentStage] = useState("")
   const [currentProgress, setCurrentProgress] = useState(0)
   const [project1Data, setProject1Data] = useState<any>(null)
+  const [project2Data, setProject2Data] = useState<any>(null)
+  const [priceType, setPriceType] = useState<PriceType>("unit")
+  const [metricType, setMetricType] = useState<MetricType>("revenue")
+  const [projectId, setProjectId] = useState<string>("")
   
   // Get project info
-  const projectId = params.id
   const projectName = projectId === "1" ? "Customer Pain Points Analysis" : "Dimmer Switch Price Analysis"
+
+  // Get project ID from params
+  useEffect(() => {
+    params.then(({ id }) => {
+      setProjectId(id)
+    })
+  }, [params])
 
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -162,6 +178,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   // Load Project 1 data and initialize historical conversation
   useEffect(() => {
+    if (!projectId) return // Wait until projectId is loaded
+    
     if (projectId === "1") {
       // Load data for Project 1 charts
       const useCaseData = getTopUseCases('dimmer', 15)
@@ -257,6 +275,17 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       ]
 
       setMessages(historicalMessages)
+    } else if (projectId === "2") {
+      // Load data for Project 2 charts but don't initialize historical messages
+      fetchDashboardData().then((dashboardData) => {
+        setProject2Data({
+          dashboardData,
+          priceSegments: getPriceSegments()
+        })
+        // Project 2 starts with empty messages for new conversation
+      }).catch((error) => {
+        console.error('Error loading dashboard data:', error)
+      })
     }
   }, [projectId])
 
@@ -294,7 +323,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   }
 
   const onExecutiveSummaryComplete = (messageId: string) => {
-    // Step 2: Show Supporting Charts after Executive Summary completes - 3x longer delay
+    // Step 2: Show Supporting Charts after Executive Summary completes
     setTimeout(() => {
       // First show loading state for Supporting Charts
       setMessages(prev => prev.map(msg => 
@@ -302,13 +331,15 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       ))
       setTimeout(() => scrollToSection(supportingChartsRef), 500)
       
-      // Then show actual content after loading
+      // Then show actual content after loading - faster for project 2
+      const loadingDuration = projectId === "2" ? 500 : 1500 // Faster loading for project 2
       setTimeout(() => {
         setMessages(prev => prev.map(msg => 
           msg.id === messageId ? { ...msg, supportingChartsLoading: false } : msg
         ))
         
-        // Auto trigger Key Insights after 2x longer delay
+        // Auto trigger Key Insights after chart loads - faster for project 2
+        const insightDelay = projectId === "2" ? 1500 : 3000 // Adjusted insights delay for project 2
         setTimeout(() => {
           setMessages(prev => prev.map(msg => 
             msg.id === messageId ? { 
@@ -319,9 +350,9 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             } : msg
           ))
           setTimeout(() => scrollToSection(keyInsightsRef), 500)
-        }, 3000) // Changed from 1500ms to 3000ms (2x longer)
-      }, 1500) // Loading effect duration
-    }, 1500) // Changed from 500ms to 1500ms (3x longer)
+        }, insightDelay)
+      }, loadingDuration)
+    }, 1500) // Initial delay remains the same
   }
 
   const onInsightComplete = (messageId: string, currentIndex: number, totalInsights: number) => {
@@ -367,56 +398,161 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       // Remove analyzing message and add results
       setMessages(prev => prev.filter(msg => !msg.isAnalyzing))
 
-      const isLutronQuery = input.toLowerCase().includes('lutron')
       let aiResponse: Message
 
-      if (isLutronQuery) {
-        aiResponse = {
-          id: (Date.now() + 2).toString(),
-          content: "I'll analyze Lutron's market share across different price segments. Let me break this down for you with detailed insights.",
-          isUser: false,
-          timestamp: new Date(),
-          keyInsights: [
-            "Lutron dominates the premium segment (>$200) with 67% market share, positioning itself as the luxury choice for high-end residential and commercial applications.",
-            "The mid-range segment ($100-$200) shows strong performance at 23% market share, indicating successful market penetration in the mainstream professional market.",
-            "Budget segment (<$100) represents 10% market share, suggesting Lutron's strategic focus on value-added products rather than price competition.",
-            "Total addressable market analysis shows Lutron captures approximately 34% of the overall smart dimmer switch market across all price segments."
-          ],
-          executiveSummary: "According to my memory, Lutron maintains a strong market position with clear premium positioning strategy. The company's 67% dominance in the premium segment demonstrates successful brand differentiation and customer loyalty. The balanced distribution across price segments (67% premium, 23% mid-range, 10% budget) reflects a well-executed market segmentation strategy that maximizes revenue while maintaining brand prestige.",
-          hasChart: true,
-          showExecutiveSummary: false,
-          showSupportingCharts: false,
-          showKeyInsights: false,
-          currentInsightIndex: 0,
-          initialResponseComplete: false,
-          insightTexts: [],
-          supportingChartsLoading: false
+      if (projectId === "2") {
+        // Handle Project 2 specific questions
+        const userQuestion = input.trim().toLowerCase()
+        
+        if (userQuestion.includes("competitors") && userQuestion.includes("price")) {
+          // First question: competitor pricing
+          aiResponse = {
+            id: (Date.now() + 2).toString(),
+            content: "",
+            isUser: false,
+            timestamp: new Date(),
+            hasChart: true,
+            chartType: 'brandPriceDistribution',
+            showExecutiveSummary: false,
+            showSupportingCharts: false,
+            showKeyInsights: false,
+            currentInsightIndex: 0,
+            initialResponseComplete: false,
+            keyInsights: [
+              "Lutron sells a wide range of products ranging from $19 to $189, establishing themselves across multiple price segments with premium positioning.",
+              "BESTTEN focuses on the lower-end multiple-pack products, with unit price concentrating in the $7-12 range for budget-conscious consumers.",
+              "Leviton maintains mid-range pricing between $15-45, targeting the professional contractor and DIY enthusiast markets.",
+              "GE offers competitive pricing in the $12-35 range, positioning as a reliable middle-market alternative to premium brands."
+            ],
+            executiveSummary: "According to my memory, I'm assuming your competitors refer to the brands with the most total revenue in the last six months within the light switch category. The competitive landscape shows clear price segmentation strategies, with premium brands like Lutron commanding higher prices while value brands like BESTTEN compete on volume and affordability."
+          }
+        } else if (userQuestion.includes("products") && userQuestion.includes("selling")) {
+          // Second question: price vs revenue
+          aiResponse = {
+            id: (Date.now() + 2).toString(),
+            content: "",
+            isUser: false,
+            timestamp: new Date(),
+            hasChart: true,
+            chartType: 'priceVsRevenue',
+            showExecutiveSummary: false,
+            showSupportingCharts: false,
+            showKeyInsights: false,
+            currentInsightIndex: 0,
+            initialResponseComplete: false,
+            keyInsights: [
+              "Higher-priced products ($40-80) generate disproportionately high revenue, indicating strong demand for premium features and quality.",
+              "The sweet spot for volume sales appears to be in the $15-30 range, where price sensitivity meets acceptable functionality.",
+              "Products above $100 show lower volume but maintain significant revenue contribution through premium positioning.",
+              "Budget products under $15 compete primarily on volume, requiring scale to achieve meaningful revenue impact."
+            ],
+            executiveSummary: "The price-revenue analysis reveals a clear correlation between product positioning and market performance. Premium products justify higher prices through advanced features and brand trust, while mid-range products capture the largest volume segment. This suggests opportunities exist across all price tiers depending on target customer segments and value propositions."
+          }
+        } else if (userQuestion.includes("lutron") && userQuestion.includes("market share")) {
+          // Third question: Lutron market share
+          aiResponse = {
+            id: (Date.now() + 2).toString(),
+            content: "",
+            isUser: false,
+            timestamp: new Date(),
+            hasChart: true,
+            chartType: 'lutronPieChart',
+            showExecutiveSummary: false,
+            showSupportingCharts: false,
+            showKeyInsights: false,
+            currentInsightIndex: 0,
+            initialResponseComplete: false,
+            keyInsights: [
+              "Premium segment ($70-$150) dominates Lutron's revenue at 45%, showcasing their successful premium brand positioning in the smart home market.",
+              "High-end products ($150+) contribute 28% of revenue, indicating strong demand for Lutron's most advanced and feature-rich solutions.",
+              "Mid-range segment ($30-$70) represents 22% of revenue, demonstrating Lutron's ability to compete across multiple price points.",
+              "Budget segment ($0-$30) accounts for only 5% of revenue, confirming Lutron's strategic focus on value-added rather than price-competitive products."
+            ],
+            executiveSummary: "According to my memory, you would like to see the market share in a pie chart, representing the percentage of total revenue for the past year. Lutron's revenue distribution clearly reflects their premium positioning strategy, with 73% of revenue coming from products priced above $70, demonstrating strong brand equity and customer willingness to pay for quality and innovation."
+          }
+        } else {
+          // Default response for other questions
+          aiResponse = {
+            id: (Date.now() + 2).toString(),
+            content: "I've analyzed your request and prepared comprehensive insights based on the available market data.",
+            isUser: false,
+            timestamp: new Date(),
+            keyInsights: [
+              "Market analysis shows significant opportunities in the identified segments with strong growth potential.",
+              "Competitive landscape reveals key differentiators that can be leveraged for strategic advantage.",
+              "Customer sentiment data indicates high satisfaction levels with current product offerings.",
+              "Price sensitivity analysis suggests optimal positioning strategies for maximum market penetration."
+            ],
+            executiveSummary: "Based on comprehensive market analysis, the data reveals strong performance indicators across multiple dimensions. Strategic recommendations focus on leveraging identified opportunities while maintaining competitive advantages in key market segments.",
+            hasChart: false,
+            showExecutiveSummary: false,
+            showSupportingCharts: false,
+            showKeyInsights: false,
+            currentInsightIndex: 0,
+            initialResponseComplete: false,
+            insightTexts: [],
+            supportingChartsLoading: false
+          }
         }
       } else {
-        aiResponse = {
-          id: (Date.now() + 2).toString(),
-          content: "I've analyzed your request and prepared comprehensive insights based on the available market data.",
-          isUser: false,
-          timestamp: new Date(),
-          keyInsights: [
-            "Market analysis shows significant opportunities in the identified segments with strong growth potential.",
-            "Competitive landscape reveals key differentiators that can be leveraged for strategic advantage.",
-            "Customer sentiment data indicates high satisfaction levels with current product offerings.",
-            "Price sensitivity analysis suggests optimal positioning strategies for maximum market penetration."
-          ],
-          executiveSummary: "Based on comprehensive market analysis, the data reveals strong performance indicators across multiple dimensions. Strategic recommendations focus on leveraging identified opportunities while maintaining competitive advantages in key market segments.",
-          hasChart: false,
-          showExecutiveSummary: false,
-          showSupportingCharts: false,
-          showKeyInsights: false,
-          currentInsightIndex: 0,
-          initialResponseComplete: false,
-          insightTexts: [],
-          supportingChartsLoading: false
+        // Handle Project 1 or other projects
+        const isLutronQuery = input.toLowerCase().includes('lutron')
+
+        if (isLutronQuery) {
+          aiResponse = {
+            id: (Date.now() + 2).toString(),
+            content: "I'll analyze Lutron's market share across different price segments. Let me break this down for you with detailed insights.",
+            isUser: false,
+            timestamp: new Date(),
+            keyInsights: [
+              "Lutron dominates the premium segment (>$200) with 67% market share, positioning itself as the luxury choice for high-end residential and commercial applications.",
+              "The mid-range segment ($100-$200) shows strong performance at 23% market share, indicating successful market penetration in the mainstream professional market.",
+              "Budget segment (<$100) represents 10% market share, suggesting Lutron's strategic focus on value-added products rather than price competition.",
+              "Total addressable market analysis shows Lutron captures approximately 34% of the overall smart dimmer switch market across all price segments."
+            ],
+            executiveSummary: "According to my memory, Lutron maintains a strong market position with clear premium positioning strategy. The company's 67% dominance in the premium segment demonstrates successful brand differentiation and customer loyalty. The balanced distribution across price segments (67% premium, 23% mid-range, 10% budget) reflects a well-executed market segmentation strategy that maximizes revenue while maintaining brand prestige.",
+            hasChart: true,
+            showExecutiveSummary: false,
+            showSupportingCharts: false,
+            showKeyInsights: false,
+            currentInsightIndex: 0,
+            initialResponseComplete: false,
+            insightTexts: [],
+            supportingChartsLoading: false
+          }
+        } else {
+          aiResponse = {
+            id: (Date.now() + 2).toString(),
+            content: "I've analyzed your request and prepared comprehensive insights based on the available market data.",
+            isUser: false,
+            timestamp: new Date(),
+            keyInsights: [
+              "Market analysis shows significant opportunities in the identified segments with strong growth potential.",
+              "Competitive landscape reveals key differentiators that can be leveraged for strategic advantage.",
+              "Customer sentiment data indicates high satisfaction levels with current product offerings.",
+              "Price sensitivity analysis suggests optimal positioning strategies for maximum market penetration."
+            ],
+            executiveSummary: "Based on comprehensive market analysis, the data reveals strong performance indicators across multiple dimensions. Strategic recommendations focus on leveraging identified opportunities while maintaining competitive advantages in key market segments.",
+            hasChart: false,
+            showExecutiveSummary: false,
+            showSupportingCharts: false,
+            showKeyInsights: false,
+            currentInsightIndex: 0,
+            initialResponseComplete: false,
+            insightTexts: [],
+            supportingChartsLoading: false
+          }
         }
       }
 
       setMessages(prev => [...prev, aiResponse])
+
+      // Trigger SSE effect chain for non-historical messages
+      if (!aiResponse.isHistorical) {
+        setTimeout(() => {
+          onInitialResponseComplete(aiResponse.id)
+        }, 1000) // Start SSE effects after 1 second
+      }
 
     } catch (error) {
       console.error('Error sending message:', error)
@@ -432,13 +568,13 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       icon: TrendingUp,
       title: "Market Analysis",
       description: "Analyze market trends and opportunities",
-      prompt: "What are the key market trends in smart home lighting?"
+      prompt: projectId === "2" ? "At what prices are my competitors selling their products?" : "What are the key market trends in smart home lighting?"
     },
     {
       icon: BarChart3,
       title: "Competitive Intelligence",
       description: "Compare competitors and positioning",
-      prompt: "How does our pricing compare to competitors?"
+      prompt: projectId === "2" ? "How well are the products of different prices selling?" : "How does our pricing compare to competitors?"
     },
     {
       icon: PieChart,
@@ -450,7 +586,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       icon: Lightbulb,
       title: "Strategic Insights",
       description: "Get actionable business insights",
-      prompt: "What opportunities exist in the premium segment?"
+      prompt: projectId === "2" ? "What opportunities exist in the premium segment?" : "What opportunities exist in the premium segment?"
     }
   ]
 
@@ -466,33 +602,55 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   }
 
   const renderExecutiveSummaryWithMemoryLink = (text: string, messageId: string) => {
-    const parts = text.split("According to my memory")
-    if (parts.length === 1) {
+    // Check if the text contains memory reference patterns
+    const memoryPattern = /According to my memory[^,]*,/
+    const match = text.match(memoryPattern)
+    
+    if (match) {
+      const beforeMemory = text.substring(0, match.index)
+      const memoryText = match[0]
+      const afterMemory = text.substring((match.index || 0) + memoryText.length)
+      
       return (
-        <TypewriterText 
-          text={text} 
-          speed={10} 
-          className="text-gray-700 leading-relaxed"
-          onComplete={() => onExecutiveSummaryComplete(messageId)}
-        />
+        <span className="text-gray-700 leading-relaxed">
+          {beforeMemory}
+          <MemoryEditor>
+            <button className="text-blue-600 hover:text-blue-800 underline font-medium">
+              {memoryText}
+            </button>
+          </MemoryEditor>
+          <TypewriterText 
+            text={afterMemory} 
+            speed={10} 
+            onComplete={() => onExecutiveSummaryComplete(messageId)}
+          />
+        </span>
       )
     }
-
+    
     return (
       <span className="text-gray-700 leading-relaxed">
-        <TypewriterText text={parts[0]} speed={10} />
-        <MemoryEditor>
-          <button className="text-blue-600 hover:text-blue-800 underline font-medium">
-            According to my memory
-          </button>
-        </MemoryEditor>
         <TypewriterText 
-          text={parts[1]} 
+          text={text} 
           speed={10} 
           onComplete={() => onExecutiveSummaryComplete(messageId)}
         />
       </span>
     )
+  }
+
+  // Transform data for scatter chart based on selected price type and metric type
+  const transformScatterData = (products: any[], category: string) => {
+    return products.map((p) => ({
+      x: priceType === "sku" ? p.price : p.unitPrice,
+      y: metricType === "revenue" ? p.revenue : p.volume,
+      name: p.name,
+      brand: p.brand,
+      volume: p.volume,
+      revenue: p.revenue,
+      url: p.url,
+      category: category,
+    }))
   }
 
   return (
@@ -735,6 +893,89 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                                         </div>
                                       </div>
                                     )}
+                                    {message.chartType === 'brandPriceDistribution' && project2Data?.dashboardData && (
+                                      <div className="relative">
+                                        <div className="flex justify-end mb-2">
+                                          <PinButton chart={{
+                                            id: "brand-price-distribution",
+                                            title: "Brand Price Distribution Analysis",
+                                            projectName: "Dimmer Switch Price Analysis",
+                                            projectId: "2",
+                                            lastUpdated: "2025-05-18",
+                                            autoUpdate: "monthly",
+                                            type: "violin",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <PricingAnalysis 
+                                          data={project2Data.dashboardData?.pricingAnalysis}
+                                          productAnalysis={project2Data.dashboardData?.productAnalysis}
+                                          productLists={project2Data.dashboardData?.productLists}
+                                        />
+                                      </div>
+                                    )}
+                                    {message.chartType === 'priceVsRevenue' && project2Data?.dashboardData?.productAnalysis && (
+                                      <div className="relative">
+                                        <div className="flex justify-end mb-2">
+                                          <PinButton chart={{
+                                            id: "revenue-analysis", 
+                                            title: "Revenue Analysis by Price Segment",
+                                            projectName: "Dimmer Switch Price Analysis",
+                                            projectId: "2",
+                                            lastUpdated: "2025-05-17",
+                                            autoUpdate: null,
+                                            type: "scatter",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <div className="space-y-4">
+                                          <div className="flex gap-4 mb-4">
+                                            <PriceTypeSelector onChange={setPriceType} />
+                                            <MetricTypeSelector onChange={setMetricType} value={metricType} />
+                                          </div>
+                                          <div className="h-[600px]">
+                                            <ScatterChart
+                                              dimmerData={transformScatterData(
+                                                project2Data.dashboardData.productAnalysis.priceVsRevenue
+                                                  .find((cat: any) => cat.category === "Dimmer Switches")?.products || [],
+                                                "🔆 Dimmer Switches"
+                                              )}
+                                              switchData={transformScatterData(
+                                                project2Data.dashboardData.productAnalysis.priceVsRevenue
+                                                  .find((cat: any) => cat.category === "Light Switches")?.products || [],
+                                                "💡 Light Switches"
+                                              )}
+                                              xAxisLabel="Price (USD)"
+                                              yAxisLabel={metricType === "revenue" ? "Revenue (USD)" : "Volume (Units)"}
+                                              priceType={priceType}
+                                              metricType={metricType}
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {message.chartType === 'lutronPieChart' && project2Data?.priceSegments && (
+                                      <div className="relative">
+                                        <div className="flex justify-end mb-2">
+                                          <PinButton chart={{
+                                            id: "lutron-price-segments",
+                                            title: "Lutron Price Segment Market Share",
+                                            projectName: "Dimmer Switch Price Analysis",
+                                            projectId: "2",
+                                            lastUpdated: "2025-05-17",
+                                            autoUpdate: "monthly",
+                                            type: "pie",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <div className="h-80 w-full">
+                                          <LutronPieChart 
+                                            data={project2Data.priceSegments}
+                                            title="Lutron Price Segment Market Share"
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 ) : (
                                   <div className="text-sm text-gray-600">
@@ -745,7 +986,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                             </Card>
                           )}
 
-                          {/* Key Insights - Third */}
+                          {/* Key Insights - Third (Independent Card) */}
                           {message.showKeyInsights && message.keyInsights && (
                             <Card ref={keyInsightsRef} className="border-l-4 border-l-blue-500">
                               <CardHeader>

@@ -19,8 +19,8 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, featured = false }: ProjectCardProps) {
-  // For project 1, go directly to chat page
-  const linkHref = project.id === "1" ? `/project/${project.id}/chat` : `/project/${project.id}`
+  // For project 1 and 2, go directly to chat page
+  const linkHref = (project.id === "1" || project.id === "2") ? `/project/${project.id}/chat` : `/project/${project.id}`
   
   return (
     <Card className={`${featured ? "border-blue-200 bg-blue-50/30" : ""} hover:shadow-md transition-shadow`}>

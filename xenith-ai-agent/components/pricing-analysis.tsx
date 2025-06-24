@@ -181,24 +181,6 @@ export function PricingAnalysis({ data, productLists, productAnalysis }: Pricing
     <section className="mb-10">
       <h2 className="text-2xl font-bold text-gray-800 border-l-4 border-blue-500 pl-4 mb-6">💰 Pricing Analysis</h2>
 
-      <h3 className="text-xl font-semibold mb-4">Price Distribution: Dimmers vs Switches</h3>
-      <Card className="p-6 bg-gray-50 mb-8">
-        <PriceTypeSelector onChange={setPriceType} />
-        <div className="h-[400px]">
-          <ViolinChart
-            dimmerPrices={dimmerPrices}
-            switchPrices={switchPrices}
-            dimmerStats={dimmerStats}
-            switchStats={switchStats}
-            priceType={priceType}
-            productLists={productLists}
-            onViolinClick={handleViolinClick}
-            dimmerProducts={dimmerProducts}
-            switchProducts={switchProducts}
-          />
-        </div>
-      </Card>
-
       <h3 className="text-xl font-semibold mb-4">Brand Price Distribution by Category</h3>
       <Card className="p-6 bg-gray-50">
         <PriceTypeSelector onChange={setPriceType} />
@@ -207,12 +189,6 @@ export function PricingAnalysis({ data, productLists, productAnalysis }: Pricing
             <h4 className="text-lg font-medium mb-3 text-center">🔆 Dimmer Switches</h4>
             <div className="h-[420px] w-full">
               <BrandViolinChart brands={getBrands(0)} priceType={priceType} category="Dimmer Switches" onViolinClick={handleBrandViolinClick} />
-            </div>
-          </div>
-          <div className="w-full">
-            <h4 className="text-lg font-medium mb-3 text-center">💡 Light Switches</h4>
-            <div className="h-[420px] w-full">
-              <BrandViolinChart brands={getBrands(1)} priceType={priceType} category="Light Switches" onViolinClick={handleBrandViolinClick} />
             </div>
           </div>
         </div>

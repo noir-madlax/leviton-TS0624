@@ -174,7 +174,7 @@ export function ScatterChart({
 
       <div className="flex-1">
         <h4 className="text-center text-base font-medium mb-1">🔆 Dimmer Switches - Price vs {metricLabel}</h4>
-        <div className="h-[350px]">
+        <div className="h-[600px]">
           <ResponsiveContainer width="100%" height="100%">
             <ReChartsScatter
               margin={{
@@ -251,92 +251,6 @@ export function ScatterChart({
               />
               <Legend verticalAlign="bottom" height={20} iconSize={10} />
               {Object.entries(dimmerByBrand).map(([brand, data]) =>
-                renderScatter(data, brand, brandColors[brand as keyof typeof brandColors] || "#D3D3D3"),
-              )}
-            </ReChartsScatter>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="flex-1 mt-4">
-        <h4 className="text-center text-base font-medium mb-1">💡 Light Switches - Price vs {metricLabel}</h4>
-        <div className="h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <ReChartsScatter
-              margin={{
-                top: 20,
-                right: 30,
-                left: 30,
-                bottom: 20,
-              }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                type="number"
-                dataKey="x"
-                name="Price"
-                tickFormatter={(value) => `$${Number(value).toFixed(2)}`}
-                label={{ value: xAxisLabel, position: "insideBottom", offset: 0 }}
-                domain={["auto", "auto"]}
-                height={50}
-              />
-              <YAxis
-                type="number"
-                dataKey="y"
-                name={metricLabel}
-                tickFormatter={metricFormatter}
-                label={{ value: yAxisLabel, angle: -90, position: "insideLeft", offset: -5 }}
-                width={90}
-              />
-              <ZAxis range={[100, 101]} />
-              <Tooltip
-                cursor={{ strokeDasharray: "3 3" }}
-                formatter={(value, name, props) => {
-                  if (name === "Price") return `$${Number(value).toFixed(2)}`
-                  if (name === metricLabel) return metricFormatter(Number(value))
-                  return value
-                }}
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload
-                    const brandColor = brandColors[data.brand as keyof typeof brandColors] || "#D3D3D3"
-                    const lightColor = lightenColor(brandColor, 0.5)
-                    
-                    return (
-                      <div 
-                        style={{
-                          backgroundColor: lightColor,
-                          border: `2px solid ${brandColor}`,
-                          borderRadius: '6px',
-                          padding: '12px',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                          width: '33vw',
-                          maxWidth: '400px',
-                          minWidth: '250px'
-                        }}
-                      >
-                        <p style={{ 
-                          fontWeight: 'bold', 
-                          margin: '0 0 6px 0', 
-                          color: '#333',
-                          wordWrap: 'break-word',
-                          lineHeight: '1.4'
-                        }}>
-                          {data.name}
-                        </p>
-                        <p style={{ margin: '3px 0', color: '#333' }}>Brand: {data.brand}</p>
-                        <p style={{ margin: '3px 0', color: '#333' }}>Category: {data.category}</p>
-                        <p style={{ margin: '3px 0', color: '#333' }}>Price: ${data.x.toFixed(2)}</p>
-                        <p style={{ margin: '3px 0', color: '#333' }}>Revenue: ${data.revenue.toLocaleString()}</p>
-                        <p style={{ margin: '3px 0 0 0', color: '#333' }}>Volume: {data.volume.toLocaleString()}</p>
-                      </div>
-                    )
-                  }
-                  return null
-                }}
-              />
-              <Legend verticalAlign="bottom" height={20} iconSize={10} />
-              {Object.entries(switchByBrand).map(([brand, data]) =>
                 renderScatter(data, brand, brandColors[brand as keyof typeof brandColors] || "#D3D3D3"),
               )}
             </ReChartsScatter>

@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Pin, PinOff } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 import { useChartPin } from "@/lib/chart-pin-context"
 
 interface ChartData {
@@ -25,25 +25,20 @@ export function PinButton({ chart, className = "" }: PinButtonProps) {
   const { togglePin, isChartPinned } = useChartPin()
   const isPinned = isChartPinned(chart.id)
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+  const handleClick = (checked: boolean) => {
     togglePin(chart)
   }
 
   return (
-    <Button 
-      variant="ghost" 
-      size="sm" 
-      className={`w-8 h-8 p-0 ${className}`}
-      onClick={handleClick}
-      title={isPinned ? "Unpin chart" : "Pin chart"}
-    >
-      {isPinned ? (
-        <Pin className="w-3 h-3 text-blue-600 fill-blue-600" />
-      ) : (
-        <PinOff className="w-3 h-3 text-gray-400 hover:text-gray-600" />
-      )}
-    </Button>
+    <div className={`flex items-center space-x-2 ${className}`}>
+      <Switch
+        checked={isPinned}
+        onCheckedChange={handleClick}
+        className="data-[state=checked]:bg-green-500"
+      />
+      <span className="text-xs text-gray-600">
+        {isPinned ? "Subscribed" : "Unsubscribed"}
+      </span>
+    </div>
   )
 } 

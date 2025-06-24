@@ -535,193 +535,10 @@ export default function OnboardingPage() {
             </Card>
           )}
 
-          {/* Product Type Selection - Only show for Smart Home category */}
-          {selectedCategory === "smart-home" && selectedSubcategory && (
-            <Card ref={productTypesRef} className="border-purple-200 bg-purple-50/30">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ToggleLeft className="w-5 h-5 text-purple-600" />
-                    <span>Select Product Types</span>
-                  </div>
-                  <Sheet open={showDetailFilter} onOpenChange={setShowDetailFilter}>
-                    <SheetTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex items-center space-x-2">
-                        <Filter className="w-4 h-4" />
-                        <span>Detail Filter</span>
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right" className="w-[500px] sm:w-[600px]">
-                      <SheetHeader>
-                        <SheetTitle className="flex items-center space-x-2">
-                          <Filter className="h-5 w-5" />
-                          <span>Data Filters</span>
-                        </SheetTitle>
-                        <SheetDescription>
-                          Choose which products, brands, and data sources to include in your analysis
-                        </SheetDescription>
-                      </SheetHeader>
-                      
-                      <ScrollArea className="h-[calc(100vh-120px)] mt-6">
-                        <div className="space-y-6">
-                          {/* Data Sources */}
-                          <div>
-                            <h3 className="font-medium mb-3">Data Sources</h3>
-                            <div className="space-y-2">
-                              {detailFilters.dataSources.map((source) => (
-                                <div key={source.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={source.id}
-                                    checked={source.checked}
-                                    onCheckedChange={() => handleDetailFilterChange('dataSources', source.id)}
-                                  />
-                                  <label htmlFor={source.id} className="text-sm font-medium cursor-pointer">
-                                    {source.name}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          {/* Top Brands Filter */}
-                          <div>
-                            <h3 className="font-medium mb-3">Top Brands Filter</h3>
-                            <div className="space-y-3">
-                              {detailFilters.topBrands.map((brand) => (
-                                <div key={brand.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                  <div className="flex items-center space-x-3">
-                                    <Checkbox
-                                      id={brand.id}
-                                      checked={true}
-                                      onCheckedChange={() => {}}
-                                    />
-                                    <label htmlFor={brand.id} className="text-sm font-medium cursor-pointer">
-                                      {brand.name}
-                                    </label>
-                                  </div>
-                                  <Badge variant="outline" className="text-xs">
-                                    {brand.percentage}%
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          {/* Sales Ranking Filter */}
-                          <div>
-                            <h3 className="font-medium mb-3">Sales Ranking Filter</h3>
-                            <div className="p-3 border rounded-lg bg-gray-50">
-                              <div className="font-medium text-sm mb-1">{detailFilters.salesRanking.filter}</div>
-                              <div className="text-xs text-gray-600">{detailFilters.salesRanking.description}</div>
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          {/* Selected Data Scope */}
-                          <div>
-                            <h3 className="font-medium mb-3">Selected Data Scope</h3>
-                            <div className="text-sm text-gray-600 mb-4">
-                              Preview of your research dataset. Your analysis project will be based on this filtered selection.
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="p-3 bg-blue-50 rounded-lg">
-                                <div className="text-2xl font-bold text-blue-600">{detailFilters.sampleData.products}</div>
-                                <div className="text-xs text-gray-600">Products</div>
-                              </div>
-                              <div className="p-3 bg-green-50 rounded-lg">
-                                <div className="text-2xl font-bold text-green-600">{detailFilters.sampleData.brands}</div>
-                                <div className="text-xs text-gray-600">Brands</div>
-                              </div>
-                              <div className="p-3 bg-purple-50 rounded-lg">
-                                <div className="text-2xl font-bold text-purple-600">{detailFilters.sampleData.reviews.toLocaleString()}</div>
-                                <div className="text-xs text-gray-600">Reviews</div>
-                              </div>
-                              <div className="p-3 bg-orange-50 rounded-lg">
-                                <div className="text-2xl font-bold text-orange-600">{detailFilters.sampleData.avgSalesPerMonth}</div>
-                                <div className="text-xs text-gray-600">Avg Sales/Month</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </ScrollArea>
-
-                      <div className="flex justify-between pt-4 border-t">
-                        <Button variant="outline" onClick={resetDetailFilters} className="flex items-center space-x-2">
-                          <RefreshCw className="w-4 h-4" />
-                          <span>Reset Filters</span>
-                        </Button>
-                        <Button onClick={applyDetailFilters} className="bg-black hover:bg-gray-800 text-white">
-                          Apply Filters
-                        </Button>
-                      </div>
-                    </SheetContent>
-                  </Sheet>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-600 mb-4">Choose the types of switch products to analyze:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {productTypes.map((productType) => (
-                      <div key={productType.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-white/50 transition-colors">
-                        <Checkbox
-                          id={productType.id}
-                          checked={selectedProductTypes.includes(productType.id)}
-                          onCheckedChange={() => handleProductTypeToggle(productType.id)}
-                        />
-                        <productType.icon className="w-4 h-4 text-purple-600" />
-                        <label htmlFor={productType.id} className="text-sm font-medium cursor-pointer flex-1">
-                          {productType.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Chart Selection */}
-          {selectedCategory && selectedSubcategory && (
-            <Card ref={chartsRef} className="border-orange-200 bg-orange-50/30">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <BarChart3 className="w-5 w-5 text-orange-600" />
-                  <span>Select Charts to Generate</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-600 mb-4">Choose which charts and analyses to include in your project:</p>
-                  <div className="space-y-3">
-                    {availableCharts.map((chart) => (
-                      <div key={chart.id} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-white/50 transition-colors">
-                        <Checkbox
-                          id={chart.id}
-                          checked={selectedCharts.includes(chart.id)}
-                          onCheckedChange={() => handleChartToggle(chart.id)}
-                        />
-                        <div className="flex-1">
-                          <label htmlFor={chart.id} className="text-sm font-medium cursor-pointer block">
-                            {chart.name}
-                          </label>
-                          <p className="text-xs text-gray-500 mt-1">{chart.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    {/* Product Type Selection and Chart Selection - Removed as per user request */}
 
           {/* Data Preview */}
-          {selectedCategory && selectedSubcategory && selectedCharts.length > 0 && (
+          {selectedCategory && selectedSubcategory && (
             <Card className="border-green-200 bg-green-50/30">
               <CardHeader>
                 <CardTitle className="text-green-800">Selected Data Scope</CardTitle>
@@ -730,7 +547,7 @@ export default function OnboardingPage() {
                 <div className="text-sm text-gray-600 mb-4">
                   Preview of your research dataset. Your analysis project will be based on this filtered selection.
                 </div>
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="p-3 bg-blue-50 rounded-lg">
                     <div className="text-2xl font-bold text-blue-600">225</div>
                     <div className="text-xs text-gray-600">Products</div>
@@ -742,10 +559,6 @@ export default function OnboardingPage() {
                   <div className="p-3 bg-purple-50 rounded-lg">
                     <div className="text-2xl font-bold text-purple-600">228,011</div>
                     <div className="text-xs text-gray-600">Reviews</div>
-                  </div>
-                  <div className="p-3 bg-orange-50 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-600">337</div>
-                    <div className="text-xs text-gray-600">Avg Sales/Month</div>
                   </div>
                 </div>
                 
