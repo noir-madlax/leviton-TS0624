@@ -31,9 +31,11 @@ interface Chart {
   id: string
   title: string
   projectName: string
+  projectId?: string
   lastUpdated: string
   autoUpdate: string | null
   type: string
+  isPinned?: boolean
 }
 
 interface SidebarProps {

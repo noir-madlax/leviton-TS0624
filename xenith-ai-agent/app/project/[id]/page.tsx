@@ -3,9 +3,7 @@
 import { useState, use, useMemo, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CategoryUseCaseBar from "@/components/CategoryUseCaseBar"
 import { CategoryPainPointsBar } from "@/components/charts/category-pain-points-bar"
@@ -14,12 +12,12 @@ import { PricingAnalysis } from "@/components/pricing-analysis"
 import { ScatterChart } from "@/components/charts/scatter-chart"
 import { PriceTypeSelector, type PriceType } from "@/components/price-type-selector"
 import { MetricTypeSelector, type MetricType } from "@/components/metric-type-selector"
+import { PinButton } from "@/components/ui/pin-button"
 import { getTopUseCases, getTopNegativeCategories } from "@/lib/categoryFeedback"
 import { getCompetitorAnalysisData } from "@/lib/competitorAnalysis"
 import { fetchDashboardData } from "@/lib/data"
 import {
   ArrowLeft,
-  Send,
   Download,
   MessageSquare,
   BarChart3,
@@ -28,16 +26,31 @@ import Link from "next/link"
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
-  const [message, setMessage] = useState("")
-  const [chatOpen, setChatOpen] = useState(false)
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [priceType, setPriceType] = useState<PriceType>("unit")
   const [metricType, setMetricType] = useState<MetricType>("revenue")
-
+  const [activeTab, setActiveTab] = useState<string>("")
+  
   // Load data based on project ID
   const projectId = resolvedParams.id
   
+  // Get tab from URL params and set active tab
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const tabParam = urlParams.get('tab')
+    if (tabParam) {
+      setActiveTab(tabParam)
+    } else {
+      // Set default tabs for each project
+      if (projectId === "1") {
+        setActiveTab("use-cases")
+      } else if (projectId === "2") {
+        setActiveTab("brand-distribution")
+      }
+    }
+  }, [projectId])
+
   // Load dashboard data for project 2
   useEffect(() => {
     if (projectId === "2") {
@@ -69,11 +82,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     return {}
   }, [projectId, dashboardData])
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return
-    // Handle chat message
-    setMessage("")
-  }
+
 
   // Get project info based on ID
   const getProjectInfo = () => {
@@ -131,14 +140,15 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setChatOpen(!chatOpen)}
-              >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                AI Chat
-              </Button>
+              <Link href={`/project/${projectId}/chat`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  AI Chat
+                </Button>
+              </Link>
               <Button variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
                 Export
@@ -179,7 +189,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             </Card>
 
             {/* Main Analysis */}
-            <Tabs defaultValue="use-cases" className="w-full">
+            <Tabs value={activeTab || "use-cases"} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="use-cases">Use Case Analysis</TabsTrigger>
                 <TabsTrigger value="categories">Critical Categories</TabsTrigger>
@@ -189,10 +199,23 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               <TabsContent value="use-cases" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>What use cases do customers complain about the most?</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Use Case Analysis filtered by top negative review count
-                    </p>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>What use cases do customers complain about the most?</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Use Case Analysis filtered by top negative review count
+                        </p>
+                      </div>
+                      <PinButton chart={{
+                        id: "use-case-analysis",
+                        title: "What use cases do customers complain about the most?",
+                        projectName: "Customer Pain Points Analysis",
+                        projectId: "1",
+                        lastUpdated: "2024-01-20",
+                        autoUpdate: "weekly",
+                        type: "bar"
+                      }} />
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <CategoryUseCaseBar data={projectData.useCaseData as any || []} />
@@ -203,10 +226,23 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               <TabsContent value="categories" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Top 10 Most Critical Categories by Negative Reviews Count</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Product features with highest customer complaints
-                    </p>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>Top 10 Most Critical Categories by Negative Reviews Count</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Product features with highest customer complaints
+                        </p>
+                      </div>
+                      <PinButton chart={{
+                        id: "critical-categories",
+                        title: "Top 10 Most Critical Categories by Negative Reviews Count",
+                        projectName: "Customer Pain Points Analysis",
+                        projectId: "1",
+                        lastUpdated: "2024-01-20",
+                        autoUpdate: "weekly",
+                        type: "bar"
+                      }} />
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <CategoryPainPointsBar data={projectData.negativeCategories || []} />
@@ -217,10 +253,23 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               <TabsContent value="competitors" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Competitor Delights and Pain Points Matrix</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Analysis for Leviton D215S, Leviton DSL06, Lutron Caseta Diva
-                    </p>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>Competitor Delights and Pain Points Matrix</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Analysis for Leviton D215S, Leviton DSL06, Lutron Caseta Diva
+                        </p>
+                      </div>
+                      <PinButton chart={{
+                        id: "competitor-matrix",
+                        title: "Competitor Delights and Pain Points Matrix",
+                        projectName: "Customer Pain Points Analysis",
+                        projectId: "1",
+                        lastUpdated: "2024-01-19",
+                        autoUpdate: "weekly",
+                        type: "matrix"
+                      }} />
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <CompetitorMatrix 
@@ -271,7 +320,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                 </Card>
 
                 {/* Main Analysis */}
-                <Tabs defaultValue="brand-distribution" className="w-full">
+                <Tabs value={activeTab || "brand-distribution"} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="brand-distribution">Brand Price Distribution</TabsTrigger>
                     <TabsTrigger value="revenue-analysis">Revenue Analysis</TabsTrigger>
@@ -280,10 +329,23 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   <TabsContent value="brand-distribution" className="space-y-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle>Brand Price Distribution by Category</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          Price ranges and positioning of different brands in dimmer and light switch categories
-                        </p>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle>Brand Price Distribution by Category</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              Price ranges and positioning of different brands in dimmer and light switch categories
+                            </p>
+                          </div>
+                          <PinButton chart={{
+                            id: "brand-price-distribution",
+                            title: "Brand Price Distribution by Category",
+                            projectName: "Dimmer Switch Price Analysis",
+                            projectId: "2",
+                            lastUpdated: "2024-01-18",
+                            autoUpdate: "monthly",
+                            type: "violin"
+                          }} />
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <PricingAnalysis 
@@ -298,10 +360,23 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   <TabsContent value="revenue-analysis" className="space-y-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle>Top 20 Products by Revenue (Price vs Revenue by Category)</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          How well products of different prices are selling in the market
-                        </p>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle>Top 20 Products by Revenue (Price vs Revenue by Category)</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              How well products of different prices are selling in the market
+                            </p>
+                          </div>
+                          <PinButton chart={{
+                            id: "revenue-analysis",
+                            title: "Top 20 Products by Revenue (Price vs Revenue by Category)",
+                            projectName: "Dimmer Switch Price Analysis",
+                            projectId: "2",
+                            lastUpdated: "2024-01-17",
+                            autoUpdate: null,
+                            type: "scatter"
+                          }} />
+                        </div>
                       </CardHeader>
                       <CardContent>
                         {projectData.dashboardData?.productAnalysis ? (
@@ -350,48 +425,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         )}
       </div>
 
-      {/* Chat Panel */}
-      {chatOpen && (
-        <div className="fixed right-0 top-0 h-full w-96 bg-white border-l shadow-lg z-50">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h3 className="font-semibold">AI Assistant</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setChatOpen(false)}
-            >
-              ×
-            </Button>
-          </div>
-          <div className="flex-1 p-4">
-            <div className="space-y-4 mb-4">
-              <div className="text-sm text-muted-foreground">
-                Ask questions about your analysis or request additional insights.
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="text-sm font-medium">AI Assistant</div>
-                <div className="text-sm mt-1">
-                  {projectId === "1" 
-                    ? "Hello! I can help you analyze your customer pain points data. What would you like to know?"
-                    : "Hello! I can help you analyze your pricing data and competitive positioning. What would you like to know?"
-                  }
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Ask about your data..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              />
-              <Button onClick={handleSendMessage}>
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   ArrowLeft,
   Clock,
@@ -28,6 +29,8 @@ import {
   Dumbbell,
   Car,
   Microscope,
+  Lightbulb,
+  ToggleLeft,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -312,9 +315,26 @@ const categories = [
   },
 ]
 
+// Available chart types
+const availableCharts = [
+  { id: "critical-categories", name: "Top 10 Most Critical Categories", description: "Categories with highest negative reviews" },
+  { id: "use-case-analysis", name: "Use Case Analysis", description: "Customer usage patterns and preferences" },
+  { id: "competitor-matrix", name: "Competitor Delights and Pain Points Matrix", description: "Competitive landscape analysis" },
+  { id: "brand-price-distribution", name: "Brand Price Distribution by Category", description: "Price positioning across brands" },
+  { id: "revenue-analysis", name: "Top 20 Products by Revenue", description: "Highest performing products" },
+]
+
+// Product types for switch products
+const productTypes = [
+  { id: "light-switch", name: "Light Switch", icon: Lightbulb },
+  { id: "dimmer-switch", name: "Dimmer Switch", icon: ToggleLeft },
+]
+
 export default function OnboardingPage() {
   const [selectedCategory, setSelectedCategory] = useState("")
   const [selectedSubcategory, setSelectedSubcategory] = useState("")
+  const [selectedProductTypes, setSelectedProductTypes] = useState<string[]>([])
+  const [selectedCharts, setSelectedCharts] = useState<string[]>(["brand-price-distribution", "revenue-analysis"])
   const router = useRouter()
 
   const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory)
@@ -324,7 +344,26 @@ export default function OnboardingPage() {
     setSelectedSubcategory("") // Reset subcategory when category changes
   }
 
+  const handleProductTypeToggle = (productTypeId: string) => {
+    setSelectedProductTypes(prev => 
+      prev.includes(productTypeId) 
+        ? prev.filter(id => id !== productTypeId)
+        : [...prev, productTypeId]
+    )
+  }
+
+  const handleChartToggle = (chartId: string) => {
+    setSelectedCharts(prev => 
+      prev.includes(chartId) 
+        ? prev.filter(id => id !== chartId)
+        : [...prev, chartId]
+    )
+  }
+
   const handleStartAnalysis = () => {
+    // Simply mark that project 2 is being created
+    localStorage.setItem('project2-in-progress', 'true')
+    
     // In a real app, this would start the data collection process
     router.push("/progress")
   }
@@ -417,8 +456,74 @@ export default function OnboardingPage() {
             </Card>
           )}
 
-          {/* Data Preview */}
+          {/* Product Type Selection - Only show for Smart Home category */}
+          {selectedCategory === "smart-home" && selectedSubcategory && (
+            <Card className="border-purple-200 bg-purple-50/30">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <ToggleLeft className="w-5 h-5 text-purple-600" />
+                  <span>Select Product Types</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600 mb-4">Choose the types of switch products to analyze:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {productTypes.map((productType) => (
+                      <div key={productType.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-white/50 transition-colors">
+                        <Checkbox
+                          id={productType.id}
+                          checked={selectedProductTypes.includes(productType.id)}
+                          onCheckedChange={() => handleProductTypeToggle(productType.id)}
+                        />
+                        <productType.icon className="w-4 h-4 text-purple-600" />
+                        <label htmlFor={productType.id} className="text-sm font-medium cursor-pointer flex-1">
+                          {productType.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Chart Selection */}
           {selectedCategory && selectedSubcategory && (
+            <Card className="border-orange-200 bg-orange-50/30">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <BarChart3 className="w-5 h-5 text-orange-600" />
+                  <span>Select Charts to Generate</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600 mb-4">Choose which charts and analyses to include in your project:</p>
+                  <div className="space-y-3">
+                    {availableCharts.map((chart) => (
+                      <div key={chart.id} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-white/50 transition-colors">
+                        <Checkbox
+                          id={chart.id}
+                          checked={selectedCharts.includes(chart.id)}
+                          onCheckedChange={() => handleChartToggle(chart.id)}
+                        />
+                        <div className="flex-1">
+                          <label htmlFor={chart.id} className="text-sm font-medium cursor-pointer block">
+                            {chart.name}
+                          </label>
+                          <p className="text-xs text-gray-500 mt-1">{chart.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Data Preview */}
+          {selectedCategory && selectedSubcategory && selectedCharts.length > 0 && (
             <Card className="border-green-200 bg-green-50/30">
               <CardHeader>
                 <CardTitle className="text-green-800">Data Preview</CardTitle>

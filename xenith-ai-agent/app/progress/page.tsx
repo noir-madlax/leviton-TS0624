@@ -108,41 +108,10 @@ export default function ProgressPage() {
         setCompleted(true)
         setActivityLog((prev) => [...prev, "✓ Price analysis complete! Generating insights..."])
         
-        // Save the new project to localStorage
-        const newProject = {
-          id: "2",
-          name: projectName,
-          category: "Smart Home > Dimmer & Light Switches",
-          createdAt: new Date().toISOString().split('T')[0],
-          lastUpdated: new Date().toISOString().split('T')[0],
-          status: "completed",
-        }
-        
-        const existingProjects = localStorage.getItem('xenith-projects')
-        let projects = []
-        if (existingProjects) {
-          try {
-            projects = JSON.parse(existingProjects)
-          } catch (error) {
-            console.error('Error parsing existing projects:', error)
-          }
-        } else {
-          // Add default project if no projects exist
-          projects = [{
-            id: "1",
-            name: "Customer Pain Points Analysis",
-            category: "Smart Home > Dimmer & Light Switches",
-            createdAt: "2024-01-15",
-            lastUpdated: "2024-01-20",
-            status: "completed",
-          }]
-        }
-        
-        // Add new project if it doesn't exist
-        if (!projects.find(p => p.id === "2")) {
-          projects.push(newProject)
-          localStorage.setItem('xenith-projects', JSON.stringify(projects))
-        }
+        // Mark project 2 as created and set as current project
+        localStorage.setItem('project2-created', 'true')
+        localStorage.setItem('current-project-id', '2')
+        localStorage.removeItem('project2-in-progress')
         
         clearInterval(interval)
       }

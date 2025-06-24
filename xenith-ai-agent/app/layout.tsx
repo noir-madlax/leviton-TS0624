@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/toaster'
 import { ProductPanelProvider } from '@/lib/product-panel-context'
 import { ReviewPanelProvider } from '@/lib/review-panel-context'
+import { ChartPinProvider } from '@/lib/chart-pin-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -32,12 +33,14 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <ProductPanelProvider>
-            <ReviewPanelProvider>
-              {children}
-              <Toaster />
-            </ReviewPanelProvider>
-          </ProductPanelProvider>
+          <ChartPinProvider>
+            <ProductPanelProvider>
+              <ReviewPanelProvider>
+                {children}
+                <Toaster />
+              </ReviewPanelProvider>
+            </ProductPanelProvider>
+          </ChartPinProvider>
         </ThemeProvider>
       </body>
     </html>

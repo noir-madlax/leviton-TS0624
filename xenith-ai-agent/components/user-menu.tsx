@@ -10,8 +10,21 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, Settings, LogOut, CreditCard, Brain } from "lucide-react"
+import { useChartPin } from "@/lib/chart-pin-context"
 
 export function UserMenu() {
+  const { resetPins } = useChartPin()
+
+  const handleLogout = () => {
+    // Reset all application state to defaults
+    resetPins()
+    localStorage.removeItem('project2-created')
+    localStorage.removeItem('project2-in-progress')
+    
+    // Reload the page to reset all state
+    window.location.reload()
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -47,7 +60,7 @@ export function UserMenu() {
           <span>Memories</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

@@ -6,6 +6,9 @@ import { Sidebar } from "@/components/sidebar"
 import { ProjectCard } from "@/components/project-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { useChartPin } from "@/lib/chart-pin-context"
+import { CategoryPainPointsBarSimple } from "@/components/charts/category-pain-points-bar-simple"
+import { getTopNegativeCategories } from "@/lib/categoryFeedback"
 import {
   Plus,
   Search,
@@ -22,7 +25,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-// Default project data
+// Default project data - only 2 projects allowed
 const defaultProjects = [
   {
     id: "1",
@@ -33,6 +36,15 @@ const defaultProjects = [
     status: "completed",
   },
 ]
+
+const project2 = {
+  id: "2",
+  name: "Dimmer Switch Price Analysis",
+  category: "Smart Home > Dimmer & Light Switches",
+  createdAt: "2024-06-24",
+  lastUpdated: "2024-06-24",
+  status: "completed",
+}
 
 const mockCharts = [
   {
@@ -81,29 +93,34 @@ const examplePrompts = [
 export default function HomePage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [projects, setProjects] = useState(defaultProjects)
+  const [currentProjectId, setCurrentProjectId] = useState("1")
+  const { getPinnedCharts } = useChartPin()
+  const pinnedCharts = getPinnedCharts()
 
   // Load projects from localStorage on mount
   useEffect(() => {
-    const savedProjects = localStorage.getItem('xenith-projects')
-    if (savedProjects) {
-      try {
-        const parsedProjects = JSON.parse(savedProjects)
-        // Only show completed projects on homepage
-        const completedProjects = parsedProjects.filter((project: any) => project.status === 'completed')
-        console.log('Parsed projects:', parsedProjects)
-        console.log('Completed projects:', completedProjects)
-        // Always start with only the default project
-        setProjects(defaultProjects)
-      } catch (error) {
-        console.error('Error parsing saved projects:', error)
-        setProjects(defaultProjects)
-      }
+    const project2Created = localStorage.getItem('project2-created')
+    const savedCurrentProject = localStorage.getItem('current-project-id')
+    
+    if (project2Created === 'true') {
+      // Show both projects if project 2 has been created
+      setProjects([...defaultProjects, project2])
     } else {
+      // Only show default project
       setProjects(defaultProjects)
+    }
+    
+    // Set current project from localStorage or default to "1"
+    if (savedCurrentProject && (savedCurrentProject === "1" || (savedCurrentProject === "2" && project2Created === 'true'))) {
+      setCurrentProjectId(savedCurrentProject)
+    } else {
+      setCurrentProjectId("1")
+      localStorage.setItem('current-project-id', "1")
     }
   }, [])
 
-  const mostRecentProject = projects[0]
+  // Get the current project based on currentProjectId
+  const mostRecentProject = projects.find(p => p.id === currentProjectId) || projects[0] || null
 
   const getChartIcon = (type: string) => {
     switch (type) {
@@ -116,11 +133,29 @@ export default function HomePage() {
     }
   }
 
+  // Get the tab value for a specific chart
+  const getChartTab = (chartId: string) => {
+    switch (chartId) {
+      case "critical-categories":
+        return "categories"
+      case "use-case-analysis":
+        return "use-cases"
+      case "competitor-matrix":
+        return "competitors"
+      case "brand-price-distribution":
+        return "brand-distribution"
+      case "revenue-analysis":
+        return "revenue-analysis"
+      default:
+        return ""
+    }
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar
         projects={projects}
-        charts={mockCharts}
+        charts={pinnedCharts}
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
@@ -174,87 +209,106 @@ export default function HomePage() {
               {/* Subscribed Charts */}
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Subscribed Charts</h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {mockCharts.map((chart) => {
-                    const ChartIcon = getChartIcon(chart.type)
-                    return (
-                      <Card key={chart.id} className="hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-2">
-                              <CardTitle className="text-base line-clamp-2">{chart.title}</CardTitle>
-                              <div className="text-sm text-gray-500">{chart.projectName}</div>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
-                                <Pin className="w-3 h-3" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
-                                <Settings className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardHeader>
-
-                        <CardContent className="pt-0">
-                          {/* Chart Visualization */}
-                          <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg h-48 flex items-center justify-center mb-4 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-white/20"></div>
-                            <div className="text-center text-gray-600 z-10">
-                              <ChartIcon className="w-16 h-16 mx-auto mb-3 text-blue-600" />
-                              <div className="text-sm font-medium">{chart.title}</div>
-                              <div className="text-xs text-gray-500 mt-1">Live {chart.type} visualization</div>
-                            </div>
-                            {/* Simulated chart elements */}
-                            <div className="absolute bottom-4 left-4 right-4">
-                              <div className="flex items-end space-x-1 h-8">
-                                {[...Array(8)].map((_, i) => (
-                                  <div
-                                    key={i}
-                                    className="bg-blue-400/60 rounded-t flex-1"
-                                    style={{ height: `${Math.random() * 100 + 20}%` }}
-                                  ></div>
-                                ))}
+                {pinnedCharts.length > 0 ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {pinnedCharts.map((chart) => {
+                      const ChartIcon = getChartIcon(chart.type)
+                      return (
+                        <Card key={chart.id} className="hover:shadow-md transition-shadow">
+                          <CardHeader className="pb-2">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-1">
+                                <CardTitle className="text-base line-clamp-1">
+                                  {chart.id === "critical-categories" ? "Critical Categories" : chart.title}
+                                </CardTitle>
+                                <div className="text-xs text-gray-500">{chart.projectName}</div>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
+                                  <Pin className="w-3 h-3 text-blue-600 fill-blue-600" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
+                                  <Settings className="w-3 h-3" />
+                                </Button>
                               </div>
                             </div>
-                          </div>
+                          </CardHeader>
 
-                          {/* Chart Info */}
-                          <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                            <div className="flex items-center space-x-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>Updated {new Date(chart.lastUpdated).toLocaleDateString()}</span>
-                            </div>
-                            {chart.autoUpdate && (
-                              <Badge variant="outline" className="text-xs">
-                                <RefreshCw className="w-2 h-2 mr-1" />
-                                Auto-updates {chart.autoUpdate}
-                              </Badge>
+                          <CardContent className="pt-0">
+                            {/* Actual Chart Content */}
+                            {chart.id === "critical-categories" ? (
+                              <div className="mb-4">
+                                <CategoryPainPointsBarSimple data={getTopNegativeCategories('dimmer', 10)} />
+                              </div>
+                            ) : (
+                              /* Placeholder for other charts */
+                              <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg h-48 flex items-center justify-center mb-4 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-white/20"></div>
+                                <div className="text-center text-gray-600 z-10">
+                                  <ChartIcon className="w-16 h-16 mx-auto mb-3 text-blue-600" />
+                                  <div className="text-sm font-medium">{chart.title}</div>
+                                  <div className="text-xs text-gray-500 mt-1">Live {chart.type} visualization</div>
+                                </div>
+                                {/* Simulated chart elements */}
+                                <div className="absolute bottom-4 left-4 right-4">
+                                  <div className="flex items-end space-x-1 h-8">
+                                    {[...Array(8)].map((_, i) => (
+                                      <div
+                                        key={i}
+                                        className="bg-blue-400/60 rounded-t flex-1"
+                                        style={{ height: `${Math.random() * 100 + 20}%` }}
+                                      ></div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
                             )}
-                          </div>
 
-                          {/* Actions */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <ChartIcon className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-600 capitalize">{chart.type} Chart</span>
+                            {/* Chart Info */}
+                            <div className="flex items-center justify-between text-xs text-gray-500 mb-3 pt-2 border-t">
+                              <div className="flex items-center space-x-1">
+                                <Calendar className="w-3 h-3" />
+                                <span>Updated {new Date(chart.lastUpdated).toLocaleDateString()}</span>
+                              </div>
+                              {chart.autoUpdate && (
+                                <Badge variant="outline" className="text-xs">
+                                  <RefreshCw className="w-2 h-2 mr-1" />
+                                  Auto-updates {chart.autoUpdate}
+                                </Badge>
+                              )}
                             </div>
 
-                            <div className="flex items-center space-x-2">
-                              <Button variant="outline" size="sm">
-                                <RefreshCw className="w-3 h-3 mr-1" />
-                                Update
-                              </Button>
-                              <Button variant="default" size="sm">
-                                View Details
-                              </Button>
+                            {/* Actions */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <ChartIcon className="w-3 h-3 text-gray-400" />
+                                <span className="text-xs text-gray-600 capitalize">{chart.type} Chart</span>
+                              </div>
+
+                              <div className="flex items-center space-x-2">
+                                <Button variant="outline" size="sm">
+                                  <RefreshCw className="w-3 h-3 mr-1" />
+                                  Update
+                                </Button>
+                                <Link href={`/project/${chart.projectId}?tab=${getChartTab(chart.id)}`}>
+                                  <Button variant="default" size="sm">
+                                    View Details
+                                  </Button>
+                                </Link>
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )
-                  })}
-                </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <Pin className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">No Pinned Charts</h4>
+                    <p className="text-gray-600">Pin your favorite charts from project pages to see them here.</p>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
