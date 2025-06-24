@@ -7,8 +7,9 @@ import { ProjectCard } from "@/components/project-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useChartPin } from "@/lib/chart-pin-context"
-import { CategoryPainPointsBarSimple } from "@/components/charts/category-pain-points-bar-simple"
+import { CategoryTrendLineChart } from "@/components/charts/category-trend-line-chart"
 import { getTopNegativeCategories } from "@/lib/categoryFeedback"
+import { generateCategoryTrendData } from "@/lib/categoryTrendData"
 import {
   Plus,
   Search,
@@ -215,7 +216,7 @@ export default function HomePage() {
                             <div className="flex items-start justify-between">
                               <div className="space-y-1">
                                 <CardTitle className="text-base line-clamp-1">
-                                  {chart.id === "critical-categories" ? "Critical Categories" : chart.title}
+                                  {chart.title}
                                 </CardTitle>
                                 <div className="text-xs text-gray-500">{chart.projectName}</div>
                               </div>
@@ -232,9 +233,9 @@ export default function HomePage() {
 
                           <CardContent className="pt-0">
                             {/* Actual Chart Content */}
-                            {chart.id === "critical-categories" ? (
+                            {chart.type === "line" ? (
                               <div className="mb-4">
-                                <CategoryPainPointsBarSimple data={getTopNegativeCategories('dimmer', 10)} />
+                                <CategoryTrendLineChart data={generateCategoryTrendData(getTopNegativeCategories('dimmer', 10))} />
                               </div>
                             ) : (
                               /* Placeholder for other charts */

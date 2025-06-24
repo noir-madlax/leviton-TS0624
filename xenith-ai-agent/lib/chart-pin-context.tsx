@@ -37,8 +37,14 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
         const parsedCharts = JSON.parse(saved)
         // Update any charts with old dates to new dates
         const updatedCharts = parsedCharts.map((chart: ChartData) => {
-          if (chart.id === "critical-categories" && (chart.lastUpdated === "2024-01-20" || chart.lastUpdated.includes("2024-01-20"))) {
-            return { ...chart, lastUpdated: "2025-05-20" }
+          if (chart.id === "critical-categories") {
+            return {
+              ...chart,
+              title: "Category Pain Points Trend Analysis",
+              autoUpdate: "monthly",
+              type: "line",
+              lastUpdated: chart.lastUpdated === "2024-01-20" || chart.lastUpdated?.includes("2024-01-20") ? "2025-05-20" : chart.lastUpdated,
+            }
           }
           return chart
         })
@@ -52,12 +58,12 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
       // Set default pinned chart - "Top 10 Most Critical Categories"
       const defaultPinnedChart: ChartData = {
         id: "critical-categories",
-        title: "Top 10 Most Critical Categories by Negative Reviews Count",
+        title: "Category Pain Points Trend Analysis",
         projectName: "Customer Pain Points Analysis",
         projectId: "1",
         lastUpdated: "2025-05-20",
-        autoUpdate: "weekly",
-        type: "bar",
+        autoUpdate: "monthly",
+        type: "line",
         isPinned: true
       }
       setPinnedCharts([defaultPinnedChart])
@@ -95,12 +101,12 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
     // Reset to default pinned chart only
     const defaultPinnedChart: ChartData = {
       id: "critical-categories",
-      title: "Top 10 Most Critical Categories by Negative Reviews Count",
+      title: "Category Pain Points Trend Analysis",
       projectName: "Customer Pain Points Analysis",
       projectId: "1",
       lastUpdated: "2025-05-20",
-      autoUpdate: "weekly",
-      type: "bar",
+      autoUpdate: "monthly",
+      type: "line",
       isPinned: true
     }
     setPinnedCharts([defaultPinnedChart])

@@ -253,7 +253,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         },
         {
           id: "hist-7",
-          content: "Show that for Leviton D215S, Leviton DSL06, Lutron Caseta Diva",
+          content: "Show that for 3 top selling products by Leviton and 3 top competitors",
           isUser: true,
           timestamp: new Date(Date.now() - 100000), // 1+ minutes ago
           isHistorical: true
@@ -890,7 +890,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                         <div className="flex justify-end mb-2">
                                           <PinButton chart={{
                                             id: "category-trend",
-                                            title: "Trend of Top Pain Points (Negative Mentions)",
+                                            title: "Trend of Most Mentioned Pain Points of Dimmer Switches",
                                             projectName: "Customer Pain Points Analysis",
                                             projectId: "1",
                                             lastUpdated: "2025-05-20",
