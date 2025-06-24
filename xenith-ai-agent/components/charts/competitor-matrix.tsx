@@ -133,17 +133,17 @@ export function CompetitorMatrix({ data, targetProducts }: CompetitorMatrixProps
   }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="min-w-full">
+    <div>
+      <div className="w-full">
         <table className="w-full border-collapse border border-gray-300">
           <thead>
             <tr className="bg-gray-50">
-              <th className="border border-gray-300 p-3 text-left font-semibold text-gray-900 min-w-[250px]">
+              <th className="border border-gray-300 p-2 text-left font-semibold text-gray-900 w-[160px]">
                 Category Dimensions
               </th>
               {orderedProducts.map(product => (
-                <th key={product} className={`border border-gray-300 p-3 text-center font-semibold min-w-[140px] ${getHeaderColor(product)}`}>
-                  <div className="text-sm">{product}</div>
+                <th key={product} className={`border border-gray-300 p-2 text-center font-semibold w-[90px] ${getHeaderColor(product)}`}>
+                  <div className="text-xs">{product}</div>
                 </th>
               ))}
             </tr>
@@ -151,9 +151,9 @@ export function CompetitorMatrix({ data, targetProducts }: CompetitorMatrixProps
           <tbody>
             {matrixData.map((row) => (
               <tr key={row.category}>
-                <td className="border border-gray-300 p-3 bg-gray-50 font-medium text-gray-900">
+                <td className="border border-gray-300 p-2 bg-gray-50 font-medium text-gray-900">
                   <div className="flex flex-col">
-                    <span className="text-sm">{row.category}</span>
+                    <span className="text-xs">{row.category}</span>
                     <span className="text-xs text-gray-500 mt-1">
                       {row.categoryType}
                     </span>
@@ -165,8 +165,8 @@ export function CompetitorMatrix({ data, targetProducts }: CompetitorMatrixProps
                   // Show N/A only if no data exists or no mentions at all
                   if (!cellData || cellData.mentions === 0) {
                     return (
-                      <td key={product} className="border border-gray-300 p-3 text-center">
-                        <div className="bg-gray-100 text-gray-400 py-2 px-3 rounded text-sm">
+                      <td key={product} className="border border-gray-300 p-2 text-center">
+                        <div className="bg-gray-100 text-gray-400 py-1 px-2 rounded text-xs">
                           N/A
                         </div>
                       </td>
@@ -174,9 +174,9 @@ export function CompetitorMatrix({ data, targetProducts }: CompetitorMatrixProps
                   }
                   
                   return (
-                    <td key={product} className="border border-gray-300 p-3 text-center">
+                    <td key={product} className="border border-gray-300 p-2 text-center">
                       <div 
-                        className={`matrix-cell py-2 px-3 rounded text-sm font-semibold ${getSatisfactionColor(cellData.satisfactionRate, cellData.totalReviews, cellData.mentions)}`}
+                        className={`matrix-cell py-1 px-2 rounded text-xs font-semibold ${getSatisfactionColor(cellData.satisfactionRate, cellData.totalReviews, cellData.mentions)}`}
                         onClick={() => handleCellClick(row.category, product, cellData)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
@@ -189,7 +189,7 @@ export function CompetitorMatrix({ data, targetProducts }: CompetitorMatrixProps
                         aria-label={`View reviews for ${row.category} - ${product}: ${cellData.mentions} mentions, ${cellData.satisfactionRate}% satisfaction`}
                         title={`Click to view reviews for ${row.category} - ${product}`}
                       >
-                        <div className="text-lg font-bold">
+                        <div className="text-sm font-bold">
                           {cellData.mentions}
                         </div>
                         <div className="text-xs mt-1">

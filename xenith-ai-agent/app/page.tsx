@@ -166,16 +166,11 @@ export default function HomePage() {
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold text-gray-900">Xenith</h1>
             <div className="flex items-center space-x-2 text-gray-500">
-              <span className="text-sm">powered by</span>
-              <img 
-                src="/logo-icon-0617-scarlett.svg" 
-                alt="3PO Lab" 
-                className="h-5 w-auto opacity-70"
-              />
+              <span className="text-xs">powered by</span>
               <img 
                 src="/logo-teamname-0617-scarlett.svg" 
                 alt="3PO Lab" 
-                className="h-4 w-auto opacity-70"
+                className="h-3 w-auto opacity-60"
               />
             </div>
           </div>
@@ -290,7 +285,7 @@ export default function HomePage() {
                                   <RefreshCw className="w-3 h-3 mr-1" />
                                   Update
                                 </Button>
-                                <Link href={`/project/${chart.projectId}?tab=${getChartTab(chart.id)}`}>
+                                <Link href={chart.id === "critical-categories" ? `/project/1/chat#critical-categories` : `/project/${chart.projectId}?tab=${getChartTab(chart.id)}`}>
                                   <Button variant="default" size="sm">
                                     View Details
                                   </Button>

@@ -14,6 +14,13 @@ import { MessageSquare, TrendingUp, BarChart3, PieChart, Lightbulb, Send, Loader
 import { LutronPieChart } from "@/components/charts/lutron-pie-chart"
 import { getPriceSegments } from "@/lib/lutron-data"
 import { MemoryEditor } from "@/components/ui/memory-editor"
+// Import Project 1 components and data
+import CategoryUseCaseBar from "@/components/CategoryUseCaseBar"
+import { CategoryPainPointsBar } from "@/components/charts/category-pain-points-bar"
+import { CompetitorMatrix } from "@/components/charts/competitor-matrix"
+import { PinButton } from "@/components/ui/pin-button"
+import { getTopUseCases, getTopNegativeCategories } from "@/lib/categoryFeedback"
+import { getCompetitorAnalysisData } from "@/lib/competitorAnalysis"
 
 interface Message {
   id: string
@@ -31,6 +38,8 @@ interface Message {
   initialResponseComplete?: boolean
   insightTexts?: string[]
   supportingChartsLoading?: boolean
+  chartType?: 'useCase' | 'categories' | 'competitors' | 'lutron'
+  isHistorical?: boolean
 }
 
 interface TypewriterTextProps {
@@ -109,6 +118,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [showTopics, setShowTopics] = useState(false)
   const [currentStage, setCurrentStage] = useState("")
   const [currentProgress, setCurrentProgress] = useState(0)
+  const [project1Data, setProject1Data] = useState<any>(null)
   
   // Get project info
   const projectId = params.id
@@ -131,6 +141,124 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Handle URL hash for anchor navigation
+  useEffect(() => {
+    // Check if there's a hash in the URL and data is loaded
+    if (typeof window !== 'undefined' && window.location.hash && project1Data) {
+      const hash = window.location.hash.substring(1) // Remove the # symbol
+      
+      // Wait for content to render before scrolling
+      const timeoutId = setTimeout(() => {
+        const targetElement = document.getElementById(hash)
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
+      }, 1000) // Give time for historical messages to render
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [project1Data, messages])
+
+  // Load Project 1 data and initialize historical conversation
+  useEffect(() => {
+    if (projectId === "1") {
+      // Load data for Project 1 charts
+      const useCaseData = getTopUseCases('dimmer', 15)
+      const negativeCategories = getTopNegativeCategories('dimmer', 10)
+      const competitorData = getCompetitorAnalysisData()
+      
+      setProject1Data({
+        useCaseData,
+        negativeCategories,
+        competitorData
+      })
+
+      // Initialize historical conversation for Project 1
+      const historicalMessages: Message[] = [
+        {
+          id: "hist-1",
+          content: "What use cases do customers complain about the most?",
+          isUser: true,
+          timestamp: new Date(Date.now() - 300000), // 5 minutes ago
+          isHistorical: true
+        },
+        {
+          id: "hist-2",
+          content: "",
+          isUser: false,
+          timestamp: new Date(Date.now() - 280000),
+          isHistorical: true,
+          hasChart: true,
+          chartType: 'useCase',
+          showExecutiveSummary: true,
+          showSupportingCharts: true,
+          showKeyInsights: true,
+          keyInsights: [
+            "Installation and setup emerges as the top pain point, with customers frequently reporting difficulties with wiring and configuration processes.",
+            "App connectivity issues significantly impact user satisfaction, with many users experiencing problems connecting devices to mobile applications.",
+            "Compatibility concerns with existing electrical systems create barriers to adoption, particularly in older homes with non-standard wiring.",
+            "Remote control functionality problems affect daily usability, with users reporting intermittent connectivity and response issues."
+          ],
+          executiveSummary: "Analysis of customer feedback reveals that technical implementation challenges dominate user complaints in the dimmer switch category. The data shows a clear pattern where customers struggle most with the initial setup and ongoing connectivity, rather than core lighting functionality. This suggests opportunities for improved installation guides, better app design, and enhanced compatibility testing."
+        },
+        {
+          id: "hist-3",
+          content: "How about product features?",
+          isUser: true,
+          timestamp: new Date(Date.now() - 200000), // 3+ minutes ago
+          isHistorical: true
+        },
+        {
+          id: "hist-4",
+          content: "",
+          isUser: false,
+          timestamp: new Date(Date.now() - 180000),
+          isHistorical: true,
+          hasChart: true,
+          chartType: 'categories',
+          showExecutiveSummary: true,
+          showSupportingCharts: true,
+          showKeyInsights: true,
+          keyInsights: [
+            "Installation leads with the highest negative review count, indicating systematic issues with product setup procedures and documentation.",
+            "App and connectivity problems rank second, highlighting the critical importance of software reliability in smart home devices.",
+            "Build quality concerns appear frequently, suggesting potential manufacturing or design issues affecting long-term durability.",
+            "Switch performance issues directly impact core functionality, representing fundamental product reliability concerns."
+          ],
+          executiveSummary: "The critical categories analysis reveals that operational aspects (installation, connectivity, build quality) generate more negative feedback than core electrical functionality. This pattern suggests that while the fundamental dimming technology is sound, the user experience and product ecosystem need significant improvement to reduce customer dissatisfaction."
+        },
+        {
+          id: "hist-5",
+          content: "Show that for Leviton D215S, Leviton DSL06, Lutron Caseta Diva",
+          isUser: true,
+          timestamp: new Date(Date.now() - 100000), // 1+ minutes ago
+          isHistorical: true
+        },
+        {
+          id: "hist-6",
+          content: "",
+          isUser: false,
+          timestamp: new Date(Date.now() - 80000),
+          isHistorical: true,
+          hasChart: true,
+          chartType: 'competitors',
+          showExecutiveSummary: true,
+          showSupportingCharts: true,
+          showKeyInsights: true,
+          keyInsights: [
+            "Leviton D215S shows strong performance in installation categories but faces challenges with app connectivity and advanced features.",
+            "Leviton DSL06 demonstrates consistent moderate performance across categories, with particular strength in basic switch functionality.",
+            "Lutron Caseta Diva excels in app integration and smart features but shows some installation complexity issues.",
+            "Cross-brand analysis reveals that no single product dominates all categories, indicating opportunities for targeted improvements."
+          ],
+          executiveSummary: "The competitive matrix for the three specified products shows distinct positioning strategies. Leviton products focus on installation simplicity and basic functionality, while Lutron emphasizes smart features and app integration. Each product has specific strengths and weaknesses, creating a diversified competitive landscape where customer choice depends on priority features and technical comfort level."
+        }
+      ]
+
+      setMessages(historicalMessages)
+    }
+  }, [projectId])
 
   const simulateAnalysis = async (): Promise<void> => {
     const stages = [
@@ -393,7 +521,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(`/project/${projectId}`)}
+                onClick={() => router.push(`/`)}
                 className="text-gray-600"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -420,7 +548,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
         {/* Messages Area */}
         <ScrollArea className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-6xl mx-auto space-y-6">
             {messages.length === 0 ? (
               /* Empty State */
               <div className="text-center py-12">
@@ -451,28 +579,50 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             ) : (
               /* Messages */
               messages.map((message) => (
-                <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`flex max-w-3xl ${message.isUser ? 'flex-row-reverse' : 'flex-row'} space-x-3`}>
-                    <Avatar className="w-8 h-8 flex-shrink-0">
-                      {message.isUser ? (
-                        <AvatarFallback className="bg-blue-600 text-white">JD</AvatarFallback>
-                      ) : (
-                        <AvatarFallback className="bg-gray-600 text-white">X</AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className={`flex-1 ${message.isUser ? 'mr-3' : 'ml-3'}`}>
+                <div key={message.id} className="w-full">
+                  {message.isUser ? (
+                    /* User Message */
+                    <div className="flex justify-end">
+                      <div className="flex flex-row-reverse space-x-3 space-x-reverse max-w-2xl">
+                        <Avatar className="w-8 h-8 flex-shrink-0">
+                          <AvatarFallback className="bg-blue-600 text-white">JD</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="bg-blue-600 text-white rounded-lg px-4 py-2">
+                            <span className="text-white">
+                              {message.content}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* AI Message */
+                    <div className="w-full">
+                      <div className="flex space-x-3">
+                        <Avatar className="w-8 h-8 flex-shrink-0">
+                          <AvatarFallback className="bg-gray-600 text-white">X</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 pr-12">
                       {message.isAnalyzing ? (
                         <AnalyzingLoader stage={currentStage} progress={currentProgress} />
-                      ) : (
+                      ) : message.content ? (
                         <div className={`p-4 rounded-lg ${message.isUser ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200'}`}>
-                          <TypewriterText 
-                            text={message.content}
-                            speed={message.isUser ? 0 : 10}
-                            className={message.isUser ? 'text-white' : 'text-gray-900'}
-                            onComplete={() => !message.isUser && onInitialResponseComplete(message.id)}
-                          />
+                          {message.isHistorical ? (
+                            // For historical messages, show content immediately without typewriter effect
+                            <span className={message.isUser ? 'text-white' : 'text-gray-900'}>
+                              {message.content}
+                            </span>
+                          ) : (
+                            <TypewriterText 
+                              text={message.content}
+                              speed={message.isUser ? 0 : 10}
+                              className={message.isUser ? 'text-white' : 'text-gray-900'}
+                              onComplete={() => !message.isUser && onInitialResponseComplete(message.id)}
+                            />
+                          )}
                         </div>
-                      )}
+                      ) : null}
 
                       {/* AI Response Cards */}
                       {!message.isUser && !message.isAnalyzing && (message.keyInsights || message.executiveSummary) && (
@@ -487,7 +637,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                                 </CardTitle>
                               </CardHeader>
                               <CardContent>
-                                {renderExecutiveSummaryWithMemoryLink(message.executiveSummary || "", message.id)}
+                                {message.isHistorical ? (
+                                  <span className="text-gray-700 leading-relaxed">{message.executiveSummary}</span>
+                                ) : (
+                                  renderExecutiveSummaryWithMemoryLink(message.executiveSummary || "", message.id)
+                                )}
                               </CardContent>
                             </Card>
                           )}
@@ -511,15 +665,76 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                                   </div>
                                 ) : message.hasChart ? (
                                   <div className="space-y-4">
-                                    <div className="text-sm text-gray-600 mb-4">
-                                      Market share distribution across Lutron's price segments:
-                                    </div>
-                                    <div className="h-80 w-full">
-                                      <LutronPieChart 
-                                        data={getPriceSegments()}
-                                        title="Lutron Price Segment Market Share"
-                                      />
-                                    </div>
+                                    {/* Render different charts based on chartType */}
+                                    {message.chartType === 'useCase' && project1Data?.useCaseData && (
+                                      <div className="relative">
+                                        <div className="flex justify-end mb-2">
+                                          <PinButton chart={{
+                                            id: "use-case-analysis",
+                                            title: "Use Case Analysis",
+                                            projectName: "Customer Pain Points Analysis",
+                                            projectId: "1",
+                                            lastUpdated: "2025-05-20",
+                                            autoUpdate: "weekly",
+                                            type: "bar",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <CategoryUseCaseBar data={project1Data.useCaseData} />
+                                      </div>
+                                    )}
+                                    {message.chartType === 'categories' && project1Data?.negativeCategories && (
+                                      <div className="relative" id="critical-categories">
+                                        <div className="flex justify-end mb-2">
+                                          <PinButton chart={{
+                                            id: "critical-categories", 
+                                            title: "Top 10 Most Critical Categories by Negative Reviews Count",
+                                            projectName: "Customer Pain Points Analysis",
+                                            projectId: "1",
+                                            lastUpdated: "2025-05-20",
+                                            autoUpdate: "weekly",
+                                            type: "bar",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <CategoryPainPointsBar data={project1Data.negativeCategories} />
+                                      </div>
+                                    )}
+                                    {message.chartType === 'competitors' && project1Data?.competitorData && (
+                                      <div className="relative">
+                                        <div className="flex justify-end mb-2">
+                                          <PinButton chart={{
+                                            id: "competitor-matrix",
+                                            title: "Competitor Pain Points Matrix", 
+                                            projectName: "Customer Pain Points Analysis",
+                                            projectId: "1",
+                                            lastUpdated: "2025-05-19",
+                                            autoUpdate: "weekly",
+                                            type: "matrix",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <div>
+                                          <CompetitorMatrix 
+                                            data={project1Data.competitorData?.matrixData || []} 
+                                            targetProducts={project1Data.competitorData?.targetProducts || []} 
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
+                                    {message.chartType === 'lutron' && (
+                                      <div className="space-y-4">
+                                        <div className="text-sm text-gray-600 mb-4">
+                                          Market share distribution across Lutron's price segments:
+                                        </div>
+                                        <div className="h-80 w-full">
+                                          <LutronPieChart 
+                                            data={getPriceSegments()}
+                                            title="Lutron Price Segment Market Share"
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 ) : (
                                   <div className="text-sm text-gray-600">
@@ -542,29 +757,42 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                               <CardContent>
                                 <div className="space-y-3">
                                   {message.keyInsights.map((insight, index) => {
-                                    const currentIndex = message.currentInsightIndex ?? 0
-                                    const isVisible = index <= currentIndex
-                                    const isActive = index === currentIndex
-                                    const isCompleted = index < currentIndex
-                                    
-                                    return (
-                                      <div key={`insight-${message.id}-${index}`} className={`flex items-start space-x-3 ${isVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
-                                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                          <span className="text-xs font-medium text-blue-600">{index + 1}</span>
-                                        </div>
-                                        {isActive ? (
-                                          <TypewriterText 
-                                            key={`typewriter-${message.id}-${index}`}
-                                            text={insight}
-                                            speed={8}
-                                            className="text-gray-700 leading-relaxed"
-                                            onComplete={() => onInsightComplete(message.id, index, message.keyInsights?.length || 0)}
-                                          />
-                                        ) : isCompleted ? (
+                                    if (message.isHistorical) {
+                                      // For historical messages, show all insights immediately
+                                      return (
+                                        <div key={`insight-${message.id}-${index}`} className="flex items-start space-x-3">
+                                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <span className="text-xs font-medium text-blue-600">{index + 1}</span>
+                                          </div>
                                           <span className="text-gray-700 leading-relaxed">{insight}</span>
-                                        ) : null}
-                                      </div>
-                                    )
+                                        </div>
+                                      )
+                                    } else {
+                                      // For new messages, use typewriter effect
+                                      const currentIndex = message.currentInsightIndex ?? 0
+                                      const isVisible = index <= currentIndex
+                                      const isActive = index === currentIndex
+                                      const isCompleted = index < currentIndex
+                                      
+                                      return (
+                                        <div key={`insight-${message.id}-${index}`} className={`flex items-start space-x-3 ${isVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
+                                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <span className="text-xs font-medium text-blue-600">{index + 1}</span>
+                                          </div>
+                                          {isActive ? (
+                                            <TypewriterText 
+                                              key={`typewriter-${message.id}-${index}`}
+                                              text={insight}
+                                              speed={8}
+                                              className="text-gray-700 leading-relaxed"
+                                              onComplete={() => onInsightComplete(message.id, index, message.keyInsights?.length || 0)}
+                                            />
+                                          ) : isCompleted ? (
+                                            <span className="text-gray-700 leading-relaxed">{insight}</span>
+                                          ) : null}
+                                        </div>
+                                      )
+                                    }
                                   })}
                                 </div>
                               </CardContent>
@@ -572,8 +800,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                           )}
                         </div>
                       )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ))
             )}
@@ -582,23 +812,27 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="bg-white border-t border-gray-200 p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex space-x-4">
-              <div className="flex-1">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask me about market analysis, competitive intelligence, or customer insights..."
-                  className="min-h-[60px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  disabled={isLoading}
-                />
-              </div>
+        <div className="border-t border-gray-200 bg-white p-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex space-x-3">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSendMessage()
+                  }
+                }}
+                placeholder="Ask me about market analysis, competitive intelligence, or customer insights..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isLoading}
+              />
               <Button
                 onClick={handleSendMessage}
                 disabled={!input.trim() || isLoading}
-                className="px-6 bg-black hover:bg-gray-800 text-white"
+                className="px-4 py-2"
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -19,6 +19,9 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, featured = false }: ProjectCardProps) {
+  // For project 1, go directly to chat page
+  const linkHref = project.id === "1" ? `/project/${project.id}/chat` : `/project/${project.id}`
+  
   return (
     <Card className={`${featured ? "border-blue-200 bg-blue-50/30" : ""} hover:shadow-md transition-shadow`}>
       <CardHeader className="pb-3">
@@ -53,7 +56,7 @@ export function ProjectCard({ project, featured = false }: ProjectCardProps) {
             <span className="text-sm text-gray-600">Market Analysis Complete</span>
           </div>
 
-          <Link href={`/project/${project.id}`}>
+          <Link href={linkHref}>
             <Button variant={featured ? "default" : "outline"} size="sm">
               {featured ? "Continue" : "View Project"}
               <ArrowRight className="w-3 h-3 ml-1" />

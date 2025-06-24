@@ -94,18 +94,23 @@ export function Sidebar({ projects, charts, collapsed, onToggle }: SidebarProps)
           </CollapsibleTrigger>
 
           <CollapsibleContent className="space-y-2 mt-2">
-            {projects.map((project) => (
-              <Link key={project.id} href={`/project/${project.id}`}>
-                <div className="p-3 rounded-lg hover:bg-gray-50 cursor-pointer border border-transparent hover:border-gray-200 transition-colors">
-                  <div className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">{project.name}</div>
-                  <div className="text-xs text-gray-500 mb-2">{project.category}</div>
-                  <div className="flex items-center space-x-1 text-xs text-gray-400">
-                    <Calendar className="w-3 h-3" />
-                    <span>Created {new Date(project.createdAt).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}</span>
+            {projects.map((project) => {
+              // For project 1, go directly to chat page
+              const linkHref = project.id === "1" ? `/project/${project.id}/chat` : `/project/${project.id}`
+              
+              return (
+                <Link key={project.id} href={linkHref}>
+                  <div className="p-3 rounded-lg hover:bg-gray-50 cursor-pointer border border-transparent hover:border-gray-200 transition-colors">
+                    <div className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">{project.name}</div>
+                    <div className="text-xs text-gray-500 mb-2">{project.category}</div>
+                    <div className="flex items-center space-x-1 text-xs text-gray-400">
+                      <Calendar className="w-3 h-3" />
+                      <span>Created {new Date(project.createdAt).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </CollapsibleContent>
         </Collapsible>
 
