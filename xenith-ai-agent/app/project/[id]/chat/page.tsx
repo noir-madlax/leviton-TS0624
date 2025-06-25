@@ -31,6 +31,7 @@ import { MetricTypeSelector, type MetricType } from "@/components/metric-type-se
 import { fetchDashboardData } from "@/lib/data"
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart"
 import { generateCategoryTrendData } from "@/lib/categoryTrendData"
+import { CategoryTrendLineChart } from "@/components/charts/category-trend-line-chart"
 
 interface Message {
   id: string
@@ -914,7 +915,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                         />
                                       </div>
                                     )}
-                                    {/* other chart cases ... */}
+                                    {message.chartType === 'categories' && project1Data?.negativeCategories && (
+                                      <div className="relative" id="critical-categories">
+                                        <CategoryPainPointsBar data={project1Data.negativeCategories} />
+                                      </div>
+                                    )}
+                                    {message.chartType === 'categoryTrend' && project1Data?.categoryTrendData && (
+                                      <div className="relative" id="category-trend">
+                                        <CategoryTrendLineChart data={project1Data.categoryTrendData} />
+                                      </div>
+                                    )}
+                                    {message.chartType === 'competitors' && project1Data?.competitorData && (
+                                      <div className="relative" id="competitor-matrix">
+                                        <CompetitorMatrix
+                                          data={project1Data.competitorData.matrixData || []}
+                                          targetProducts={project1Data.competitorData.targetProducts || []}
+                                        />
+                                      </div>
+                                    )}
                                   </div>
                                 ) : (
                                   <div className="text-sm text-gray-600">
