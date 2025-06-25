@@ -29,7 +29,7 @@ import { ScatterChart } from "@/components/charts/scatter-chart"
 import { PriceTypeSelector, type PriceType } from "@/components/price-type-selector"
 import { MetricTypeSelector, type MetricType } from "@/components/metric-type-selector"
 import { fetchDashboardData } from "@/lib/data"
-import { CategoryTrendLineChart } from "@/components/charts/category-trend-line-chart"
+import { GroupedBarChart } from "@/components/charts/grouped-bar-chart"
 import { generateCategoryTrendData } from "@/lib/categoryTrendData"
 
 interface Message {
@@ -48,7 +48,7 @@ interface Message {
   initialResponseComplete?: boolean
   insightTexts?: string[]
   supportingChartsLoading?: boolean
-  chartType?: 'useCase' | 'categories' | 'competitors' | 'lutron' | 'brandPriceDistribution' | 'priceVsRevenue' | 'lutronPieChart' | 'categoryTrend'
+  chartType?: 'useCase' | 'categories' | 'competitors' | 'lutron' | 'brandPriceDistribution' | 'priceVsRevenue' | 'lutronPieChart' | 'categoryTrend' | 'topSegments'
   isHistorical?: boolean
 }
 
@@ -133,6 +133,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [priceType, setPriceType] = useState<PriceType>("unit")
   const [metricType, setMetricType] = useState<MetricType>("revenue")
   const [projectId, setProjectId] = useState<string>("")
+  const [highlightSend, setHighlightSend] = useState(false)
+  const [isTypingExample, setIsTypingExample] = useState(false)
   
   // Get project info
   const projectName = projectId === "1" ? "Customer Pain Points Analysis" : "New Project"
@@ -320,11 +322,23 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   // Sequential display management
   const onInitialResponseComplete = (messageId: string) => {
-    // Step 1: Show Executive Summary after initial response completes
+    // Skip Executive Summary for topSegments response
     setTimeout(() => {
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? { ...msg, showExecutiveSummary: true } : msg
-      ))
+      setMessages(prev => {
+        if (prev.find(msg => msg.id === messageId)?.chartType === 'topSegments') {
+          return prev.map(msg => {
+            if (msg.id !== messageId) return msg
+            if (msg.chartType === 'topSegments') {
+              return msg // leave showExecutiveSummary false
+            }
+            return { ...msg, showExecutiveSummary: true }
+          })
+        }
+        return prev.map(msg => {
+          if (msg.id !== messageId) return msg
+          return { ...msg, showExecutiveSummary: true }
+        })
+      })
       setTimeout(() => scrollToSection(executiveSummaryRef), 500)
     }, 500)
   }
@@ -373,6 +387,65 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
+  // ===== Helpers: Top Selling Segments =====
+  const segmentColors = [
+    "#E67E22", "#3498DB", "#9B59B6", "#2ECC71", "#F39C12",
+    "#E74C3C", "#1ABC9C", "#34495E", "#F1C40F", "#95A5A6",
+    "#8E44AD", "#27AE60", "#D35400", "#2980B9", "#C0392B"
+  ]
+
+  const wrapText = (text: string, maxLength: number = 12) => {
+    if (text.length <= maxLength) return text
+    const words = text.split(' ')
+    let lines: string[] = []
+    let currentLine = ''
+    for (const word of words) {
+      if ((currentLine + word).length <= maxLength) {
+        currentLine += (currentLine ? ' ' : '') + word
+      } else {
+        if (currentLine) lines.push(currentLine)
+        currentLine = word
+      }
+    }
+    if (currentLine) lines.push(currentLine)
+    return lines.join('\n')
+  }
+
+  const getTopSellingSegmentsChartData = () => {
+    const segmentRevenue = project2Data?.dashboardData?.marketInsights?.segmentRevenue
+    console.log('DEBUG ‣ segmentRevenue', segmentRevenue)
+    if (!segmentRevenue) {
+      console.warn('DEBUG ‣ segmentRevenue is undefined — returning empty array for chart data')
+      return []
+    }
+    const combined: any[] = [
+      ...segmentRevenue.dimmerSwitches,
+      ...segmentRevenue.lightSwitches,
+    ]
+    const top10 = combined.sort((a, b) => b.revenue - a.revenue).slice(0, 10)
+    console.log('DEBUG ‣ top10 combined segments', top10)
+    return top10.map((item, index) => {
+      const cleanName = item.segment
+        .replace(" Dimmer Switches", " Dimmer")
+        .replace(" Switches", " Switch")
+        .replace("Smart Wi-Fi Enabled", "Wi-Fi Smart")
+        .replace("Smart Hub-Dependent", "Hub-Dependent Smart")
+        .replace("WiFi Connected", "WiFi")
+      return {
+        name: wrapText(cleanName, 12),
+        value: item.revenue,
+        fill: segmentColors[index % segmentColors.length]
+      }
+    })
+  }
+
+  // Debug log when component renders Supporting Charts
+  useEffect(() => {
+    if (messages.some(m => m.chartType === 'topSegments')) {
+      console.log('DEBUG ‣ topSegments chartData', getTopSellingSegmentsChartData())
+    }
+  }, [messages])
+
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return
 
@@ -405,151 +478,29 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       // Remove analyzing message and add results
       setMessages(prev => prev.filter(msg => !msg.isAnalyzing))
 
-      let aiResponse: Message
+      // Always return the Top Selling Product Segments answer
+      const chartData = getTopSellingSegmentsChartData()
+      const top3 = chartData.slice(0, 3)
 
-      if (projectId === "2") {
-        // Handle Project 2 specific questions
-        const userQuestion = input.trim().toLowerCase()
-        
-        if (userQuestion.includes("competitors") && userQuestion.includes("price")) {
-          // First question: competitor pricing
-          aiResponse = {
+      const aiResponse: Message = {
             id: (Date.now() + 2).toString(),
-            content: "",
+        content: "Here's the breakdown of the top selling product segments based on dimmer and light-switch sales.",
             isUser: false,
             timestamp: new Date(),
             hasChart: true,
-            chartType: 'brandPriceDistribution',
-            showExecutiveSummary: false,
-            showSupportingCharts: false,
-            showKeyInsights: false,
+        chartType: 'topSegments',
+        showSupportingCharts: true,
+        supportingChartsLoading: false,
+        showKeyInsights: true,
             currentInsightIndex: 0,
             initialResponseComplete: false,
             keyInsights: [
-              "Lutron sells a wide range of products ranging from $19 to $189, establishing themselves across multiple price segments with premium positioning.",
-              "BESTTEN focuses on the lower-end multiple-pack products, with unit price concentrating in the $7-12 range for budget-conscious consumers.",
-              "Leviton maintains mid-range pricing between $15-45, targeting the professional contractor and DIY enthusiast markets.",
-              "GE offers competitive pricing in the $12-35 range, positioning as a reliable middle-market alternative to premium brands."
+          `${top3[0]?.name.replace(/\n/g, ' ')} leads overall sales with $${(top3[0]?.value || 0).toLocaleString()} in revenue, highlighting strong consumer interest in smart, connected controls.`,
+          `${top3[1]?.name.replace(/\n/g, ' ')} follows closely, indicating continued popularity of traditional yet reliable switch designs.`,
+          `${top3[2]?.name.replace(/\n/g, ' ')} ranks third, showcasing market demand for versatile multi-location installations.`,
+          "The dominance of smart and Wi-Fi enabled segments underscores the growing importance of connectivity and user convenience across both dimmer and light-switch categories."
             ],
-            executiveSummary: "According to my memory, I'm assuming your competitors refer to the brands with the most total revenue in the last six months within the light switch category. The competitive landscape shows clear price segmentation strategies, with premium brands like Lutron commanding higher prices while value brands like BESTTEN compete on volume and affordability."
-          }
-        } else if (userQuestion.includes("products") && userQuestion.includes("selling")) {
-          // Second question: price vs revenue
-          aiResponse = {
-            id: (Date.now() + 2).toString(),
-            content: "",
-            isUser: false,
-            timestamp: new Date(),
-            hasChart: true,
-            chartType: 'priceVsRevenue',
-            showExecutiveSummary: false,
-            showSupportingCharts: false,
-            showKeyInsights: false,
-            currentInsightIndex: 0,
-            initialResponseComplete: false,
-            keyInsights: [
-              "Higher-priced products ($40-80) generate disproportionately high revenue, indicating strong demand for premium features and quality.",
-              "The sweet spot for volume sales appears to be in the $15-30 range, where price sensitivity meets acceptable functionality.",
-              "Products above $100 show lower volume but maintain significant revenue contribution through premium positioning.",
-              "Budget products under $15 compete primarily on volume, requiring scale to achieve meaningful revenue impact."
-            ],
-            executiveSummary: "The price-revenue analysis reveals a clear correlation between product positioning and market performance. Premium products justify higher prices through advanced features and brand trust, while mid-range products capture the largest volume segment. This suggests opportunities exist across all price tiers depending on target customer segments and value propositions."
-          }
-        } else if (userQuestion.includes("lutron") && userQuestion.includes("market share")) {
-          // Third question: Lutron market share
-          aiResponse = {
-            id: (Date.now() + 2).toString(),
-            content: "",
-            isUser: false,
-            timestamp: new Date(),
-            hasChart: true,
-            chartType: 'lutronPieChart',
-            showExecutiveSummary: false,
-            showSupportingCharts: false,
-            showKeyInsights: false,
-            currentInsightIndex: 0,
-            initialResponseComplete: false,
-            keyInsights: [
-              "Premium segment ($70-$150) dominates Lutron's revenue at 45%, showcasing their successful premium brand positioning in the smart home market.",
-              "High-end products ($150+) contribute 28% of revenue, indicating strong demand for Lutron's most advanced and feature-rich solutions.",
-              "Mid-range segment ($30-$70) represents 22% of revenue, demonstrating Lutron's ability to compete across multiple price points.",
-              "Budget segment ($0-$30) accounts for only 5% of revenue, confirming Lutron's strategic focus on value-added rather than price-competitive products."
-            ],
-            executiveSummary: "According to my memory, you would like to see the market share in a pie chart, representing the percentage of total revenue for the past year. Lutron's revenue distribution clearly reflects their premium positioning strategy, with 73% of revenue coming from products priced above $70, demonstrating strong brand equity and customer willingness to pay for quality and innovation."
-          }
-        } else {
-          // Default response for other questions
-          aiResponse = {
-            id: (Date.now() + 2).toString(),
-            content: "I've analyzed your request and prepared comprehensive insights based on the available market data.",
-            isUser: false,
-            timestamp: new Date(),
-            keyInsights: [
-              "Market analysis shows significant opportunities in the identified segments with strong growth potential.",
-              "Competitive landscape reveals key differentiators that can be leveraged for strategic advantage.",
-              "Customer sentiment data indicates high satisfaction levels with current product offerings.",
-              "Price sensitivity analysis suggests optimal positioning strategies for maximum market penetration."
-            ],
-            executiveSummary: "Based on comprehensive market analysis, the data reveals strong performance indicators across multiple dimensions. Strategic recommendations focus on leveraging identified opportunities while maintaining competitive advantages in key market segments.",
-            hasChart: false,
-            showExecutiveSummary: false,
-            showSupportingCharts: false,
-            showKeyInsights: false,
-            currentInsightIndex: 0,
-            initialResponseComplete: false,
-            insightTexts: [],
-            supportingChartsLoading: false
-          }
-        }
-      } else {
-        // Handle Project 1 or other projects
-        const isLutronQuery = input.toLowerCase().includes('lutron')
-
-        if (isLutronQuery) {
-          aiResponse = {
-            id: (Date.now() + 2).toString(),
-            content: "I'll analyze Lutron's market share across different price segments. Let me break this down for you with detailed insights.",
-            isUser: false,
-            timestamp: new Date(),
-            keyInsights: [
-              "Lutron dominates the premium segment (>$200) with 67% market share, positioning itself as the luxury choice for high-end residential and commercial applications.",
-              "The mid-range segment ($100-$200) shows strong performance at 23% market share, indicating successful market penetration in the mainstream professional market.",
-              "Budget segment (<$100) represents 10% market share, suggesting Lutron's strategic focus on value-added products rather than price competition.",
-              "Total addressable market analysis shows Lutron captures approximately 34% of the overall smart dimmer switch market across all price segments."
-            ],
-            executiveSummary: "According to my memory, Lutron maintains a strong market position with clear premium positioning strategy. The company's 67% dominance in the premium segment demonstrates successful brand differentiation and customer loyalty. The balanced distribution across price segments (67% premium, 23% mid-range, 10% budget) reflects a well-executed market segmentation strategy that maximizes revenue while maintaining brand prestige.",
-            hasChart: true,
-            showExecutiveSummary: false,
-            showSupportingCharts: false,
-            showKeyInsights: false,
-            currentInsightIndex: 0,
-            initialResponseComplete: false,
-            insightTexts: [],
-            supportingChartsLoading: false
-          }
-        } else {
-          aiResponse = {
-            id: (Date.now() + 2).toString(),
-            content: "I've analyzed your request and prepared comprehensive insights based on the available market data.",
-            isUser: false,
-            timestamp: new Date(),
-            keyInsights: [
-              "Market analysis shows significant opportunities in the identified segments with strong growth potential.",
-              "Competitive landscape reveals key differentiators that can be leveraged for strategic advantage.",
-              "Customer sentiment data indicates high satisfaction levels with current product offerings.",
-              "Price sensitivity analysis suggests optimal positioning strategies for maximum market penetration."
-            ],
-            executiveSummary: "Based on comprehensive market analysis, the data reveals strong performance indicators across multiple dimensions. Strategic recommendations focus on leveraging identified opportunities while maintaining competitive advantages in key market segments.",
-            hasChart: false,
-            showExecutiveSummary: false,
-            showSupportingCharts: false,
-            showKeyInsights: false,
-            currentInsightIndex: 0,
-            initialResponseComplete: false,
-            insightTexts: [],
-            supportingChartsLoading: false
-          }
-        }
+        executiveSummary: `The combined analysis of dimmer and light switch categories shows that ${top3[0]?.name.replace(/\n/g, ' ')} captures the largest share of revenue, followed by ${top3[1]?.name.replace(/\n/g, ' ')} and ${top3[2]?.name.replace(/\n/g, ' ')}. This indicates consumers gravitate toward feature-rich smart controls while still valuing familiar switch formats. Targeting these leading segments can maximize short-term gains while informing long-term product strategy.`,
       }
 
       setMessages(prev => [...prev, aiResponse])
@@ -591,14 +542,38 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     },
     {
       icon: Lightbulb,
-      title: "Underserved Use Cases",
+      title: "Opportunities Missed by Competitors",
       description: "Find use cases competitors fail to address",
       prompt: "Which use cases are underserved by competitors?"
     }
   ]
 
   const handleExampleClick = (prompt: string) => {
-    setInput(prompt)
+    if (isTypingExample || isLoading) return
+
+    setInput("")
+    setIsTypingExample(true)
+    let index = 0
+    const typingSpeed = 40 // ms per character
+
+    const interval = setInterval(() => {
+      setInput(prev => prev + prompt[index])
+      index += 1
+
+      if (index >= prompt.length) {
+        clearInterval(interval)
+        // small delay to ensure last character renders
+        setTimeout(() => {
+          setIsTypingExample(false)
+          setHighlightSend(true)
+          // highlight effect duration before auto-sending
+          setTimeout(() => {
+            handleSendMessage()
+            setHighlightSend(false)
+          }, 300)
+        }, 100)
+      }
+    }, typingSpeed)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -659,6 +634,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       category: category,
     }))
   }
+
+  // ===== Helpers: Top Selling Segments =====
+  // (duplicate helper definitions removed)
 
   // Review panel context
   const reviewPanel = useReviewPanel()
@@ -747,8 +725,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                       />
                       <Button
                         onClick={handleSendMessage}
-                        disabled={!input.trim() || isLoading}
-                        className="px-4 py-2"
+                        disabled={!input.trim() || isLoading || isTypingExample}
+                        className={`px-4 py-2 ${highlightSend ? 'ring-2 ring-blue-400 animate-pulse' : ''}`}
                       >
                         {isLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -849,206 +827,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                             </Card>
                           )}
 
-                          {/* Supporting Charts - Second */}
-                          {message.showSupportingCharts && (
-                            <Card ref={supportingChartsRef} className="border-l-4 border-l-purple-500">
-                              <CardHeader>
-                                <CardTitle className="flex items-center space-x-2">
-                                  <BarChart3 className="h-5 w-5 text-purple-600" />
-                                  <span>Supporting Charts</span>
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                {message.supportingChartsLoading ? (
-                                  <div className="flex items-center justify-center py-8">
-                                    <div className="flex items-center space-x-3">
-                                      <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
-                                      <span className="text-sm text-gray-600">Generating charts...</span>
-                                    </div>
-                                  </div>
-                                ) : message.hasChart ? (
-                                  <div className="space-y-4">
-                                    {/* Render different charts based on chartType */}
-                                    {message.chartType === 'useCase' && project1Data?.useCaseData && (
-                                      <div className="relative">
-                                        <div className="flex justify-end mb-2">
-                                          <PinButton chart={{
-                                            id: "use-case-analysis",
-                                            title: "Use Case Analysis",
-                                            projectName: "Customer Pain Points Analysis",
-                                            projectId: "1",
-                                            lastUpdated: "2025-05-20",
-                                            autoUpdate: "weekly",
-                                            type: "bar",
-                                            isPinned: false
-                                          }} />
-                                        </div>
-                                        <CategoryUseCaseBar data={project1Data.useCaseData} />
-                                      </div>
-                                    )}
-                                    {message.chartType === 'categories' && project1Data?.negativeCategories && (
-                                      <div className="relative" id="critical-categories">
-                                        <div className="flex justify-end mb-2">
-                                          <PinButton chart={{
-                                            id: "critical-categories", 
-                                            title: "Top 10 Most Critical Categories by Negative Reviews Count",
-                                            projectName: "Customer Pain Points Analysis",
-                                            projectId: "1",
-                                            lastUpdated: "2025-05-20",
-                                            autoUpdate: "weekly",
-                                            type: "bar",
-                                            isPinned: false
-                                          }} />
-                                        </div>
-                                        <CategoryPainPointsBar data={project1Data.negativeCategories} />
-                                      </div>
-                                    )}
-                                    {message.chartType === 'competitors' && project1Data?.competitorData && (
-                                      <div className="relative">
-                                        <div className="flex justify-end mb-2">
-                                          <PinButton chart={{
-                                            id: "competitor-matrix",
-                                            title: "Competitor Pain Points Matrix", 
-                                            projectName: "Customer Pain Points Analysis",
-                                            projectId: "1",
-                                            lastUpdated: "2025-05-19",
-                                            autoUpdate: "weekly",
-                                            type: "matrix",
-                                            isPinned: false
-                                          }} />
-                                        </div>
-                                        <div>
-                                          <CompetitorMatrix 
-                                            data={project1Data.competitorData?.matrixData || []} 
-                                            targetProducts={project1Data.competitorData?.targetProducts || []} 
-                                          />
-                                        </div>
-                                      </div>
-                                    )}
-                                    {message.chartType === 'categoryTrend' && project1Data?.categoryTrendData && (
-                                      <div className="relative" id="category-trend">
-                                        <div className="flex justify-end mb-2">
-                                          <PinButton chart={{
-                                            id: "category-trend",
-                                            title: "Trend of Most Mentioned Pain Points of Dimmer Switches",
-                                            projectName: "Customer Pain Points Analysis",
-                                            projectId: "1",
-                                            lastUpdated: "2025-05-20",
-                                            autoUpdate: "weekly",
-                                            type: "line",
-                                            isPinned: false
-                                          }} />
-                                        </div>
-                                        <CategoryTrendLineChart data={project1Data.categoryTrendData} />
-                                      </div>
-                                    )}
-                                    {message.chartType === 'lutron' && (
-                                      <div className="space-y-4">
-                                        <div className="text-sm text-gray-600 mb-4">
-                                          Market share distribution across Lutron's price segments:
-                                        </div>
-                                        <div className="h-80 w-full">
-                                          <LutronPieChart 
-                                            data={getPriceSegments()}
-                                            title="Lutron Price Segment Market Share"
-                                          />
-                                        </div>
-                                      </div>
-                                    )}
-                                    {message.chartType === 'brandPriceDistribution' && project2Data?.dashboardData && (
-                                      <div className="relative">
-                                        <div className="flex justify-end mb-2">
-                                          <PinButton chart={{
-                                            id: "brand-price-distribution",
-                                            title: "Brand Price Distribution Analysis",
-                                            projectName: "New Project",
-                                            projectId: "2",
-                                            lastUpdated: "2025-05-18",
-                                            autoUpdate: "monthly",
-                                            type: "violin",
-                                            isPinned: false
-                                          }} />
-                                        </div>
-                                        <PricingAnalysis 
-                                          data={project2Data.dashboardData?.pricingAnalysis}
-                                          productAnalysis={project2Data.dashboardData?.productAnalysis}
-                                          productLists={project2Data.dashboardData?.productLists}
-                                        />
-                                      </div>
-                                    )}
-                                    {message.chartType === 'priceVsRevenue' && project2Data?.dashboardData?.productAnalysis && (
-                                      <div className="relative">
-                                        <div className="flex justify-end mb-2">
-                                          <PinButton chart={{
-                                            id: "revenue-analysis", 
-                                            title: "Revenue Analysis by Price Segment",
-                                            projectName: "New Project",
-                                            projectId: "2",
-                                            lastUpdated: "2025-05-17",
-                                            autoUpdate: null,
-                                            type: "scatter",
-                                            isPinned: false
-                                          }} />
-                                        </div>
-                                        <div className="space-y-4">
-                                          <div className="flex gap-4 mb-4">
-                                            <PriceTypeSelector onChange={setPriceType} />
-                                            <MetricTypeSelector onChange={setMetricType} value={metricType} />
-                                          </div>
-                                          <div className="h-[600px]">
-                                            <ScatterChart
-                                              dimmerData={transformScatterData(
-                                                project2Data.dashboardData.productAnalysis.priceVsRevenue
-                                                  .find((cat: any) => cat.category === "Dimmer Switches")?.products || [],
-                                                "🔆 Dimmer Switches"
-                                              )}
-                                              switchData={transformScatterData(
-                                                project2Data.dashboardData.productAnalysis.priceVsRevenue
-                                                  .find((cat: any) => cat.category === "Light Switches")?.products || [],
-                                                "💡 Light Switches"
-                                              )}
-                                              xAxisLabel="Price (USD)"
-                                              yAxisLabel={metricType === "revenue" ? "Revenue (USD)" : "Volume (Units)"}
-                                              priceType={priceType}
-                                              metricType={metricType}
-                                            />
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
-                                    {message.chartType === 'lutronPieChart' && project2Data?.priceSegments && (
-                                      <div className="relative">
-                                        <div className="flex justify-end mb-2">
-                                          <PinButton chart={{
-                                            id: "lutron-price-segments",
-                                            title: "Lutron Price Segment Market Share",
-                                            projectName: "New Project",
-                                            projectId: "2",
-                                            lastUpdated: "2025-05-17",
-                                            autoUpdate: "monthly",
-                                            type: "pie",
-                                            isPinned: false
-                                          }} />
-                                        </div>
-                                        <div className="h-80 w-full">
-                                          <LutronPieChart 
-                                            data={project2Data.priceSegments}
-                                            title="Lutron Price Segment Market Share"
-                                          />
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="text-sm text-gray-600">
-                                    No specific charts available for this analysis. The insights above provide comprehensive coverage of the requested information.
-                                  </div>
-                                )}
-                              </CardContent>
-                            </Card>
-                          )}
-
-                          {/* Key Insights - Third (Independent Card) */}
+                          {/* Key Insights - First */}
                           {message.showKeyInsights && message.keyInsights && (
                             <Card ref={keyInsightsRef} className="border-l-4 border-l-blue-500">
                               <CardHeader>
@@ -1101,6 +880,50 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                               </CardContent>
                             </Card>
                           )}
+
+                          {/* Supporting Charts - Second */}
+                          {message.showSupportingCharts && (
+                            <Card ref={supportingChartsRef} className="border-l-4 border-l-purple-500">
+                              <CardHeader>
+                                <CardTitle className="flex items-center space-x-2">
+                                  <BarChart3 className="h-5 w-5 text-purple-600" />
+                                  <span>Supporting Charts</span>
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                {message.supportingChartsLoading ? (
+                                  <div className="flex items-center justify-center py-8">
+                                    <div className="flex items-center space-x-3">
+                                      <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+                                      <span className="text-sm text-gray-600">Generating charts...</span>
+                                    </div>
+                                  </div>
+                                ) : message.hasChart ? (
+                                  <div className="space-y-4">
+                                    {message.chartType === 'topSegments' && (
+                                      <div className="relative h-[600px]">
+                                        <GroupedBarChart
+                                          data={getTopSellingSegmentsChartData()}
+                                          index="name"
+                                          categories={["value"]}
+                                          colors={segmentColors}
+                                          metricType="revenue"
+                                          xAxisLabel="Product Segment"
+                                          yAxisLabel="Revenue ($)"
+                                          title="Top 10 Product Segments by Revenue"
+                                        />
+                                      </div>
+                                    )}
+                                    {/* other chart cases ... */}
+                                  </div>
+                                ) : (
+                                  <div className="text-sm text-gray-600">
+                                    No specific charts available for this analysis. The insights above provide comprehensive coverage of the requested information.
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          )}
                         </div>
                       )}
                         </div>
@@ -1135,8 +958,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               />
               <Button
                 onClick={handleSendMessage}
-                disabled={!input.trim() || isLoading}
-                className="px-4 py-2"
+                disabled={!input.trim() || isLoading || isTypingExample}
+                className={`px-4 py-2 ${highlightSend ? 'ring-2 ring-blue-400 animate-pulse' : ''}`}
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -341,9 +341,9 @@ const detailFilterData = {
     description: "Based on monthly sales volume"
   },
   sampleData: {
-    products: 225,
-    brands: 9,
-    reviews: 228011,
+    products: 825,
+    brands: 39,
+    reviews: 48011,
     avgSalesPerMonth: 337
   }
 }
