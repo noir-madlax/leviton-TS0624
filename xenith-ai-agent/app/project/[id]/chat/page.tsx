@@ -573,27 +573,27 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const examplePrompts = [
     {
       icon: TrendingUp,
-      title: "Market Analysis",
-      description: "Analyze market trends and opportunities",
-      prompt: projectId === "2" ? "At what prices are my competitors selling their products?" : "What are the key market trends in smart home lighting?"
+      title: projectId === "2" ? "Revenue by Price Segment" : "Market Analysis",
+      description: projectId === "2" ? "Which price tier is generating the most revenue?" : "Analyze market trends and opportunities",
+      prompt: projectId === "2" ? "Which price segment drives the most revenue for dimmer switches?" : "What are the key market trends in smart home lighting?"
     },
     {
       icon: BarChart3,
-      title: "Competitive Intelligence",
-      description: "Compare competitors and positioning",
-      prompt: projectId === "2" ? "How well are the products of different prices selling?" : "How does our pricing compare to competitors?"
+      title: projectId === "2" ? "Top Sellers < $25" : "Competitive Intelligence",
+      description: projectId === "2" ? "Discover the best-selling budget products" : "Compare competitors and positioning",
+      prompt: projectId === "2" ? "What are the top-selling dimmer switch models priced under $25?" : "How does our pricing compare to competitors?"
     },
     {
       icon: PieChart,
-      title: "Lutron Analysis",
-      description: "Analyze Lutron's market performance",
-      prompt: "Show me the market share of each price segment of Lutron"
+      title: projectId === "2" ? "Lutron Share by Price" : "Lutron Analysis",
+      description: projectId === "2" ? "Assess Lutron's market share across tiers" : "Analyze Lutron's market performance",
+      prompt: projectId === "2" ? "How does Lutron's market share vary across different price tiers?" : "Show me the market share of each price segment of Lutron"
     },
     {
       icon: Lightbulb,
-      title: "Strategic Insights",
-      description: "Get actionable business insights",
-      prompt: projectId === "2" ? "What opportunities exist in the premium segment?" : "What opportunities exist in the premium segment?"
+      title: projectId === "2" ? "Premium Opportunities" : "Strategic Insights",
+      description: projectId === "2" ? "Identify growth gaps above $50" : "Get actionable business insights",
+      prompt: projectId === "2" ? "Where are the biggest growth opportunities in the premium (> $50) smart switch market?" : "What opportunities exist in the premium segment?"
     }
   ]
 
@@ -727,23 +727,57 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <h2 className="text-xl font-semibold mb-2">Welcome to AI Market Research</h2>
                 <p className="text-gray-600 mb-8">Ask me anything about market analysis, competitive intelligence, or customer insights.</p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                  {examplePrompts.map((example, index) => (
-                    <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleExampleClick(example.prompt)}>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <example.icon className="h-5 w-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-sm">{example.title}</CardTitle>
-                            <CardDescription className="text-xs">{example.description}</CardDescription>
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  ))}
-                </div>
+                {projectId === "2" && (
+                  <div className="max-w-lg mx-auto">
+                    {/* Chat input */}
+                    <div className="flex space-x-3">
+                      <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault()
+                            handleSendMessage()
+                          }
+                        }}
+                        placeholder="Ask me about pricing insights..."
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={isLoading}
+                      />
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={!input.trim() || isLoading}
+                        className="px-4 py-2"
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* FAQ list with reduced gap (mt-6) */}
+                    <div className="flex flex-col gap-4 mt-6">
+                      {examplePrompts.map((example, index) => (
+                        <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleExampleClick(example.prompt)}>
+                          <CardHeader className="pb-3">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <example.icon className="h-5 w-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <CardTitle className="text-sm text-left">{example.title}</CardTitle>
+                                <CardDescription className="text-xs text-left">{example.description}</CardDescription>
+                              </div>
+                            </div>
+                          </CardHeader>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               /* Messages */
@@ -1081,6 +1115,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         </ScrollArea>
 
         {/* Input Area */}
+        {!(projectId === "2" && messages.length === 0) && (
         <div className="border-t border-gray-200 bg-white p-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex space-x-3">
@@ -1112,6 +1147,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
 
