@@ -258,6 +258,13 @@ function MemoryCard({ memory, isEditing, onEdit, onSave, onDelete, onCancel, cat
     onSave(memory.id, editContent, editCategory)
   }
 
+  // Helper function to get project name from ID
+  const getProjectName = (projectId: string) => {
+    if (projectId === "1") return "Customer Pain Points Analysis"
+    if (projectId === "2") return "New Project"
+    return `Project ${projectId}`
+  }
+
   if (isEditing) {
     return (
       <Card className="border-l-4 border-l-blue-500">
@@ -307,7 +314,7 @@ function MemoryCard({ memory, isEditing, onEdit, onSave, onDelete, onCancel, cat
             </Badge>
             {memory.scope === "project" && memory.projectId && (
               <Badge variant="secondary" className="text-xs whitespace-nowrap px-2 py-1 bg-blue-100 text-blue-700">
-                Project {memory.projectId}
+                {getProjectName(memory.projectId)}
               </Badge>
             )}
             {memory.scope === "global" && (

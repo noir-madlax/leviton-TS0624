@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Xenith - AI Market Research Platform',
-  description: 'Powered by 3PO Lab',
+  description: 'AI-powered market research and competitive analysis platform',
   icons: {
     icon: '/logo-icon-0617-scarlett.svg',
     shortcut: '/logo-icon-0617-scarlett.svg',

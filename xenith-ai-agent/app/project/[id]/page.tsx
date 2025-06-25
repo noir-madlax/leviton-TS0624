@@ -151,7 +151,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       }
     } else if (projectId === "2") {
       return {
-        name: "Dimmer Switch Price Analysis", 
+        name: "New Project",
         category: "Smart Home > Dimmer & Light Switches"
       }
     }
@@ -355,7 +355,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             </Tabs>
           </div>
         ) : projectId === "2" ? (
-          // Project 2: Dimmer Switch Price Analysis
+          // Project 2: New Project
           <div className="grid grid-cols-1 gap-8">
             {loading ? (
               <Card>
@@ -412,7 +412,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           <PinButton chart={{
                             id: "brand-price-distribution",
                             title: "Brand Price Distribution Analysis",
-                            projectName: "Dimmer Switch Price Analysis",
+                            projectName: "New Project",
                             projectId: "2",
                             lastUpdated: "2025-05-18",
                             autoUpdate: "monthly",
@@ -444,7 +444,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           <PinButton chart={{
                             id: "revenue-analysis", 
                             title: "Revenue Analysis by Price Segment",
-                            projectName: "Dimmer Switch Price Analysis",
+                            projectName: "New Project",
                             projectId: "2",
                             lastUpdated: "2025-05-17",
                             autoUpdate: null,

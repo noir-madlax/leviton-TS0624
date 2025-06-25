@@ -698,31 +698,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   ]
 
   const handleExampleClick = (prompt: string) => {
-    if (isTypingExample || isLoading) return
+    if (isLoading) return
 
-    setInput("")
-    setIsTypingExample(true)
-    let index = 0
-    const typingSpeed = 40 // ms per character
-
-    const interval = setInterval(() => {
-      setInput(prev => prev + prompt[index])
-      index += 1
-
-      if (index >= prompt.length) {
-        clearInterval(interval)
-        // small delay to ensure last character renders
-        setTimeout(() => {
-          setIsTypingExample(false)
-          setHighlightSend(true)
-          // highlight effect duration before auto-sending
-          setTimeout(() => {
-            handleSendMessage()
-            setHighlightSend(false)
-          }, 300)
-        }, 100)
-      }
-    }, typingSpeed)
+    setInput(prompt)
+    // Immediately send the message without typing effect
+    setTimeout(() => {
+      handleSendMessage()
+    }, 100)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

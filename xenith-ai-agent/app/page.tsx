@@ -41,7 +41,7 @@ const defaultProjects = [
 
 const project2 = {
   id: "2",
-  name: "Dimmer Switch Price Analysis",
+  name: "New Project",
   category: "Smart Home > Dimmer & Light Switches",
   createdAt: "2025-06-25",
   lastUpdated: "2025-06-25",
@@ -167,14 +167,6 @@ export default function HomePage() {
         <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold text-gray-900">Xenith</h1>
-            <div className="flex items-center space-x-2 text-gray-500">
-              <span className="text-[8px]">powered by</span>
-              <img 
-                src="/logo-teamname-0617-scarlett.svg" 
-                alt="3PO Lab" 
-                className="h-2.5 w-auto opacity-60"
-              />
-            </div>
           </div>
 
           <div className="flex items-center space-x-4">
