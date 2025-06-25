@@ -572,28 +572,28 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   const examplePrompts = [
     {
-      icon: TrendingUp,
-      title: projectId === "2" ? "Revenue by Price Segment" : "Market Analysis",
-      description: projectId === "2" ? "Which price tier is generating the most revenue?" : "Analyze market trends and opportunities",
-      prompt: projectId === "2" ? "Which price segment drives the most revenue for dimmer switches?" : "What are the key market trends in smart home lighting?"
-    },
-    {
       icon: BarChart3,
-      title: projectId === "2" ? "Top Sellers < $25" : "Competitive Intelligence",
-      description: projectId === "2" ? "Discover the best-selling budget products" : "Compare competitors and positioning",
-      prompt: projectId === "2" ? "What are the top-selling dimmer switch models priced under $25?" : "How does our pricing compare to competitors?"
+      title: "Top Selling Product Segments",
+      description: "Identify which product segments lead in sales",
+      prompt: "What are the top selling product segments?"
     },
     {
       icon: PieChart,
-      title: projectId === "2" ? "Lutron Share by Price" : "Lutron Analysis",
-      description: projectId === "2" ? "Assess Lutron's market share across tiers" : "Analyze Lutron's market performance",
-      prompt: projectId === "2" ? "How does Lutron's market share vary across different price tiers?" : "Show me the market share of each price segment of Lutron"
+      title: "Brand Market Share",
+      description: "Show market share for each brand",
+      prompt: "What is the market share by brand?"
+    },
+    {
+      icon: TrendingUp,
+      title: "Customer Pain Points Trend",
+      description: "Analyze trend of customer pain points",
+      prompt: "How have customer pain points trended over time?"
     },
     {
       icon: Lightbulb,
-      title: projectId === "2" ? "Premium Opportunities" : "Strategic Insights",
-      description: projectId === "2" ? "Identify growth gaps above $50" : "Get actionable business insights",
-      prompt: projectId === "2" ? "Where are the biggest growth opportunities in the premium (> $50) smart switch market?" : "What opportunities exist in the premium segment?"
+      title: "Underserved Use Cases",
+      description: "Find use cases competitors fail to address",
+      prompt: "Which use cases are underserved by competitors?"
     }
   ]
 
@@ -728,7 +728,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <p className="text-gray-600 mb-8">Ask me anything about market analysis, competitive intelligence, or customer insights.</p>
                 
                 {projectId === "2" && (
-                  <div className="max-w-lg mx-auto">
+                  <div className="max-w-2xl w-full mx-auto">
                     {/* Chat input */}
                     <div className="flex space-x-3">
                       <input
