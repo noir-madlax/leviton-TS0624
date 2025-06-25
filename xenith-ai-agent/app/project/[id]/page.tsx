@@ -16,6 +16,7 @@ import { PinButton } from "@/components/ui/pin-button"
 import { getTopUseCases, getTopNegativeCategories } from "@/lib/categoryFeedback"
 import { getCompetitorAnalysisData } from "@/lib/competitorAnalysis"
 import { fetchDashboardData } from "@/lib/data"
+import { allReviewData } from "@/lib/reviewData"
 import {
   ArrowLeft,
   Download,
@@ -84,6 +85,60 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     return {}
   }, [projectId, dashboardData])
 
+  // Generate real matrix data for competitor analysis (Project 1)
+  const realCompetitorMatrixData = useMemo(() => {
+    if (projectId !== "1" || !projectData.competitorData) return []
+
+    const { targetProducts } = projectData.competitorData as any
+    const categories: string[] = [
+      ...new Set<string>(
+        ((projectData.competitorData as any).matrixData.map((item: any) => item.category as string) as string[])
+      ),
+    ]
+
+    // Map product names to ASINs
+    const productToAsin: Record<string, string> = {
+      'Leviton D26HD': 'B0BVKYKKRK',
+      'Leviton D215S': 'B0BVKZLT3B',
+      'Lutron Caseta Diva': 'B0BSHKS26L',
+      'TP Link Switch': 'B01EZV35QU',
+      'Leviton DSL06': 'B00NG0ELL0',
+      'Lutron Diva': 'B085D8M2MR'
+    }
+
+    const realData: any[] = []
+
+    targetProducts.forEach((product: string) => {
+      const productAsin = productToAsin[product]
+      if (!productAsin) return
+
+      categories.forEach((category: string) => {
+        const categoryReviews = allReviewData[category] || []
+        const productReviews = categoryReviews.filter((review: any) => review.productId === productAsin)
+
+        const positiveReviews = productReviews.filter((r: any) => r.sentiment === 'positive')
+        const negativeReviews = productReviews.filter((r: any) => r.sentiment === 'negative')
+        const totalReviews = positiveReviews.length + negativeReviews.length
+        const satisfactionRate = totalReviews > 0 ? (positiveReviews.length / totalReviews) * 100 : 0
+
+        const original = (projectData.competitorData as any).matrixData.find((it: any) => it.product === product && it.category === category)
+
+        realData.push({
+          product,
+          category,
+          categoryType: original?.categoryType || 'Physical',
+          mentions: productReviews.length,
+          satisfactionRate: Math.round(satisfactionRate * 10) / 10,
+          positiveCount: positiveReviews.length,
+          negativeCount: negativeReviews.length,
+          totalReviews,
+        })
+      })
+    })
+
+    return realData
+  }, [projectId, projectData])
+
   // Review panel context
   const reviewPanel = useReviewPanel()
 
@@ -123,7 +178,6 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
-    <>
     <div className="min-h-screen bg-gray-50/50">
       {/* Header */}
       <header className="border-b bg-white">
@@ -255,7 +309,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   </CardHeader>
                   <CardContent>
                     <CompetitorMatrix 
-                      data={projectData.competitorData?.matrixData || []} 
+                      data={realCompetitorMatrixData}
                       targetProducts={projectData.competitorData?.targetProducts || []} 
                     />
                   </CardContent>
@@ -409,17 +463,15 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         )}
       </div>
 
+      {/* Review Panel (opens when a matrix cell is clicked) */}
+      <ReviewPanel
+        isOpen={reviewPanel.isOpen}
+        onClose={reviewPanel.closePanel}
+        reviews={reviewPanel.reviews}
+        title={reviewPanel.title}
+        subtitle={reviewPanel.subtitle}
+        showFilters={reviewPanel.showFilters}
+      />
     </div>
-
-    {/* Review Panel (opens when a matrix cell is clicked) */}
-    <ReviewPanel
-      isOpen={reviewPanel.isOpen}
-      onClose={reviewPanel.closePanel}
-      reviews={reviewPanel.reviews}
-      title={reviewPanel.title}
-      subtitle={reviewPanel.subtitle}
-      showFilters={reviewPanel.showFilters}
-    />
-    </>
   )
 }

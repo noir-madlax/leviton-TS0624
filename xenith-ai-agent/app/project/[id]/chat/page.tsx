@@ -14,6 +14,8 @@ import { MessageSquare, TrendingUp, BarChart3, PieChart, Lightbulb, Send, Loader
 import { LutronPieChart } from "@/components/charts/lutron-pie-chart"
 import { getPriceSegments } from "@/lib/lutron-data"
 import { MemoryEditor } from "@/components/ui/memory-editor"
+import { ReviewPanel } from "@/components/ui/review-panel"
+import { useReviewPanel } from "@/lib/review-panel-context"
 // Import Project 1 components and data
 import CategoryUseCaseBar from "@/components/CategoryUseCaseBar"
 import { CategoryPainPointsBar } from "@/components/charts/category-pain-points-bar"
@@ -658,7 +660,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }))
   }
 
+  // Review panel context
+  const reviewPanel = useReviewPanel()
+
   return (
+    <>
     <div className="flex h-screen bg-gray-50">
       {/* Topics Sidebar */}
       <div className={`${showTopics ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden bg-white border-r border-gray-200`}>
@@ -1108,5 +1114,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </div>
     </div>
+
+    {/* Review Panel */}
+    <ReviewPanel
+      isOpen={reviewPanel.isOpen}
+      onClose={reviewPanel.closePanel}
+      reviews={reviewPanel.reviews}
+      title={reviewPanel.title}
+      subtitle={reviewPanel.subtitle}
+      showFilters={reviewPanel.showFilters}
+    />
+    </>
   )
 } 
