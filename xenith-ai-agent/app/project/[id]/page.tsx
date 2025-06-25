@@ -257,6 +257,43 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                 <TabsTrigger value="competitors">Competitor Matrix</TabsTrigger>
               </TabsList>
 
+              <TabsContent value="use-cases" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>Top 10 Use Cases by Customer Mentions</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Most frequently mentioned use cases in customer reviews
+                        </p>
+                      </div>
+                      <PinButton chart={{
+                        id: "use-case-analysis",
+                        title: "Top 10 Use Cases by Customer Mentions",
+                        projectName: "Customer Pain Points Analysis",
+                        projectId: "1",
+                        lastUpdated: "2025-05-20",
+                        autoUpdate: "weekly",
+                        type: "bar",
+                        isPinned: false
+                      }} />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <CategoryUseCaseBar data={projectData.useCaseData?.map(item => ({
+                      category: item.categoryType,
+                      useCase: item.useCase,
+                      displayName: item.useCase.length > 15 ? item.useCase.substring(0, 15) + '...' : item.useCase,
+                      totalMentions: item.totalMentions,
+                      satisfactionRate: item.satisfactionRate,
+                      negativeCount: item.negativeCount,
+                      positiveCount: item.positiveCount,
+                      neutralCount: 0
+                    })) || []} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="categories" className="space-y-6">
                 <Card>
                   <CardHeader>

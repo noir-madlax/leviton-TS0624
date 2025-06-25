@@ -535,7 +535,7 @@ export default function OnboardingPage() {
             </Card>
           )}
 
-                    {/* Product Type Selection and Chart Selection - Removed as per user request */}
+          {/* Product Type Selection and Chart Selection - Removed as per user request */}
 
           {/* Data Preview */}
           {selectedCategory && selectedSubcategory && (
@@ -549,15 +549,15 @@ export default function OnboardingPage() {
                 </div>
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="p-3 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">225</div>
+                    <div className="text-2xl font-bold text-blue-600">1,250</div>
                     <div className="text-xs text-gray-600">Products</div>
                   </div>
                   <div className="p-3 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">9</div>
+                    <div className="text-2xl font-bold text-green-600">28</div>
                     <div className="text-xs text-gray-600">Brands</div>
                   </div>
                   <div className="p-3 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">228,011</div>
+                    <div className="text-2xl font-bold text-purple-600">850,000</div>
                     <div className="text-xs text-gray-600">Reviews</div>
                   </div>
                 </div>
@@ -568,7 +568,7 @@ export default function OnboardingPage() {
                   </div>
                   <div>
                     <div className="font-medium text-sm text-green-800">Estimated Processing Time</div>
-                    <div className="text-xs text-green-600">3-7 minutes</div>
+                    <div className="text-xs text-green-600">20 minutes</div>
                   </div>
                 </div>
 

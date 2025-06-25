@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { MessageSquare, TrendingUp, BarChart3, PieChart, Lightbulb, Send, Loader2, X, Clock, User, Edit3, ArrowLeft } from 'lucide-react'
+import { MessageSquare, TrendingUp, BarChart3, PieChart, Lightbulb, Send, Loader2, X, Clock, User, Edit3, ArrowLeft, CheckCircle } from 'lucide-react'
 import { LutronPieChart } from "@/components/charts/lutron-pie-chart"
 import { getPriceSegments } from "@/lib/lutron-data"
 import { MemoryEditor } from "@/components/ui/memory-editor"
@@ -49,8 +49,9 @@ interface Message {
   initialResponseComplete?: boolean
   insightTexts?: string[]
   supportingChartsLoading?: boolean
-  chartType?: 'useCase' | 'categories' | 'competitors' | 'lutron' | 'brandPriceDistribution' | 'priceVsRevenue' | 'lutronPieChart' | 'categoryTrend' | 'topSegments'
+  chartType?: 'useCase' | 'categories' | 'competitors' | 'lutron' | 'brandPriceDistribution' | 'priceVsRevenue' | 'lutronPieChart' | 'categoryTrend' | 'topSegments' | 'dimmerPriceAnalysis'
   isHistorical?: boolean
+  showMemoryTag?: boolean
 }
 
 interface TypewriterTextProps {
@@ -119,7 +120,23 @@ function AnalyzingLoader({ stage, progress }: AnalyzingLoaderProps) {
   )
 }
 
-
+// Memory Tag Component
+function MemoryTag({ onMemoryClick }: { onMemoryClick: () => void }) {
+  return (
+    <div className="mt-3 animate-fadeIn">
+      <div className="flex items-center space-x-2 text-sm">
+        <CheckCircle className="w-4 h-4 text-green-500" />
+        <span className="text-green-600">One preference added to</span>
+        <button 
+          onClick={onMemoryClick}
+          className="text-blue-600 hover:text-blue-800 underline font-medium transition-colors"
+        >
+          Memory
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
@@ -136,6 +153,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [projectId, setProjectId] = useState<string>("")
   const [highlightSend, setHighlightSend] = useState(false)
   const [isTypingExample, setIsTypingExample] = useState(false)
+  const [conversationStep, setConversationStep] = useState(0) // 0: 第一步, 1: 第二步, 2: 第三步及以后
+  const [showMemoryEditor, setShowMemoryEditor] = useState(false)
   
   // Get project info
   const projectName = projectId === "1" ? "Customer Pain Points Analysis" : "New Project"
@@ -323,24 +342,35 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   // Sequential display management
   const onInitialResponseComplete = (messageId: string) => {
-    // Skip Executive Summary for topSegments response
+    // For topSegments, skip Executive Summary and go directly to Key Insights
     setTimeout(() => {
       setMessages(prev => {
-        if (prev.find(msg => msg.id === messageId)?.chartType === 'topSegments') {
+        const message = prev.find(msg => msg.id === messageId)
+        if (message?.chartType === 'topSegments' || message?.chartType === 'dimmerPriceAnalysis') {
           return prev.map(msg => {
             if (msg.id !== messageId) return msg
-            if (msg.chartType === 'topSegments') {
-              return msg // leave showExecutiveSummary false
+            return { 
+              ...msg, 
+              showKeyInsights: true,
+              currentInsightIndex: 0,
+              insightTexts: msg.keyInsights ? [...msg.keyInsights] : []
             }
-            return { ...msg, showExecutiveSummary: true }
           })
         }
+        // For other types, show Executive Summary
         return prev.map(msg => {
           if (msg.id !== messageId) return msg
           return { ...msg, showExecutiveSummary: true }
         })
       })
-      setTimeout(() => scrollToSection(executiveSummaryRef), 500)
+      
+      // Scroll to appropriate section
+      const message = messages.find(msg => msg.id === messageId)
+      if (message?.chartType === 'topSegments' || message?.chartType === 'dimmerPriceAnalysis') {
+        setTimeout(() => scrollToSection(keyInsightsRef), 500)
+      } else {
+        setTimeout(() => scrollToSection(executiveSummaryRef), 500)
+      }
     }, 500)
   }
 
@@ -385,6 +415,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           msg.id === messageId ? { ...msg, currentInsightIndex: currentIndex + 1 } : msg
         ))
       }, 300)
+    } else {
+      // All insights completed, show Supporting Charts for topSegments and dimmerPriceAnalysis
+      const message = messages.find(msg => msg.id === messageId)
+      if (message?.chartType === 'topSegments' || message?.chartType === 'dimmerPriceAnalysis') {
+        setTimeout(() => {
+          setMessages(prev => prev.map(msg => 
+            msg.id === messageId ? { ...msg, showSupportingCharts: true, supportingChartsLoading: false } : msg
+          ))
+          setTimeout(() => scrollToSection(supportingChartsRef), 500)
+        }, 1000) // Wait a moment after all insights complete
+      }
     }
   }
 
@@ -447,6 +488,38 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   }, [messages])
 
+  // Get Dimmer-only data for price analysis
+  const getDimmerOnlyData = () => {
+    const dimmerProducts = project2Data?.dashboardData?.productAnalysis?.priceVsRevenue
+      ?.find((cat: any) => cat.category === "Dimmer Switches")?.products || []
+    
+    return dimmerProducts.map((p: any) => ({
+      x: p.unitPrice,
+      y: p.revenue,
+      name: p.name,
+      brand: p.brand,
+      volume: p.volume,
+      revenue: p.revenue,
+      category: "🔆 Dimmer Switches"
+    }))
+  }
+
+  // Generate Key Insights for Dimmer price analysis
+  const generateDimmerInsights = () => {
+    const dimmerData = getDimmerOnlyData()
+    if (dimmerData.length === 0) return []
+
+    // Sort by revenue to get top performers
+    const topByRevenue = [...dimmerData].sort((a, b) => b.y - a.y).slice(0, 3)
+    
+    return [
+      `${topByRevenue[0]?.name.split(',')[0]} leads dimmer sales with $${(topByRevenue[0]?.y || 0).toLocaleString()} in revenue, demonstrating strong market demand for premium smart dimmer solutions.`,
+      `Price analysis shows dimmer switches range from $${Math.min(...dimmerData.map((d: any) => d.x)).toFixed(2)} to $${Math.max(...dimmerData.map((d: any) => d.x)).toFixed(2)}, with higher-priced units typically generating more revenue per product.`,
+      `${topByRevenue[1]?.brand} and ${topByRevenue[2]?.brand} brands show strong performance in the dimmer category, indicating diverse consumer preferences across different price segments.`,
+      "The dimmer market shows clear correlation between product features, brand positioning, and revenue generation, with smart connectivity being a key value driver."
+    ]
+  }
+
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return
 
@@ -461,56 +534,159 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     setInput("")
     setIsLoading(true)
 
-    // Add analyzing message
-    const analyzingMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      content: "",
-      isUser: false,
-      timestamp: new Date(),
-      isAnalyzing: true
-    }
-
-    setMessages(prev => [...prev, analyzingMessage])
-
     try {
-      // Simulate analysis process
-      await simulateAnalysis()
+      if (conversationStep === 0) {
+        // 第一步：返回 topSegments 回答
+        // Add analyzing message
+        const analyzingMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: "",
+          isUser: false,
+          timestamp: new Date(),
+          isAnalyzing: true
+        }
 
-      // Remove analyzing message and add results
-      setMessages(prev => prev.filter(msg => !msg.isAnalyzing))
+        setMessages(prev => [...prev, analyzingMessage])
 
-      // Always return the Top Selling Product Segments answer
-      const chartData = getTopSellingSegmentsChartData()
-      const top3 = chartData.slice(0, 3)
+        // Simulate analysis process
+        await simulateAnalysis()
 
-      const aiResponse: Message = {
+        // Remove analyzing message and add results
+        setMessages(prev => prev.filter(msg => !msg.isAnalyzing))
+
+        // Always return the Top Selling Product Segments answer
+        const chartData = getTopSellingSegmentsChartData()
+        const top3 = chartData.slice(0, 3)
+
+        const aiResponse: Message = {
+              id: (Date.now() + 2).toString(),
+          content: "Here's the breakdown of the top selling product segments based on dimmer and light-switch sales.",
+              isUser: false,
+              timestamp: new Date(),
+              hasChart: true,
+          chartType: 'topSegments',
+          showSupportingCharts: false,
+          supportingChartsLoading: false,
+          showKeyInsights: false,
+              currentInsightIndex: 0,
+              initialResponseComplete: false,
+              keyInsights: [
+            `${top3[0]?.name.replace(/\n/g, ' ')} leads overall sales with $${(top3[0]?.value || 0).toLocaleString()} in revenue, highlighting strong consumer interest in smart, connected controls.`,
+            `${top3[1]?.name.replace(/\n/g, ' ')} follows closely, indicating continued popularity of traditional yet reliable switch designs.`,
+            `${top3[2]?.name.replace(/\n/g, ' ')} ranks third, showcasing market demand for versatile multi-location installations.`,
+            "The dominance of smart and Wi-Fi enabled segments underscores the growing importance of connectivity and user convenience across both dimmer and light-switch categories."
+              ]
+            }
+
+        setMessages(prev => [...prev, aiResponse])
+
+        // Trigger SSE effect chain for non-historical messages
+        if (!aiResponse.isHistorical) {
+          setTimeout(() => {
+            onInitialResponseComplete(aiResponse.id)
+          }, 1000) // Start SSE effects after 1 second
+        }
+
+        setConversationStep(1)
+
+      } else if (conversationStep === 1) {
+        // 第二步：返回 Memory 更新回答
+        const dimmerCount = project2Data?.dashboardData?.executiveSummary?.productDistribution
+          ?.find((item: any) => item.name === "Dimmer Switches")?.value || "151"
+
+        const aiResponse: Message = {
+          id: (Date.now() + 2).toString(),
+          content: `Understood. We'll now focus on the ${dimmerCount} dimmer products in this category.`,
+          isUser: false,
+          timestamp: new Date(),
+          showMemoryTag: false,
+          initialResponseComplete: false
+        }
+
+        setMessages(prev => [...prev, aiResponse])
+
+        // Start SSE for the text first
+        setTimeout(() => {
+          setMessages(prev => prev.map(msg => 
+            msg.id === aiResponse.id 
+              ? { ...msg, initialResponseComplete: true }
+              : msg
+          ))
+          
+          // Then show Memory tag after text is complete
+          setTimeout(() => {
+            setMessages(prev => prev.map(msg => 
+              msg.id === aiResponse.id 
+                ? { ...msg, showMemoryTag: true }
+                : msg
+            ))
+          }, 1500) // Delay for Memory tag appearance
+        }, 1000)
+
+        setConversationStep(2)
+
+      } else {
+        // 第三步及以后：返回 dimmerPriceAnalysis 回答
+        
+        // First show analyzing loader
+        const analyzingMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: "",
+          isUser: false,
+          timestamp: new Date(),
+          isAnalyzing: true
+        }
+
+        setMessages(prev => [...prev, analyzingMessage])
+        setIsLoading(true)
+        setCurrentStage("Analyzing price data")
+        setCurrentProgress(0)
+
+        // Simulate analysis progress
+        const progressInterval = setInterval(() => {
+          setCurrentProgress(prev => {
+            if (prev >= 100) {
+              clearInterval(progressInterval)
+              return 100
+            }
+            return prev + 20
+          })
+        }, 200)
+
+        // After analysis, show the actual response
+        setTimeout(() => {
+          setIsLoading(false)
+          setCurrentStage("")
+          setCurrentProgress(0)
+          clearInterval(progressInterval)
+
+          // Remove analyzing message and add actual response
+          setMessages(prev => prev.filter(msg => msg.id !== analyzingMessage.id))
+
+          const aiResponse: Message = {
             id: (Date.now() + 2).toString(),
-        content: "Here's the breakdown of the top selling product segments based on dimmer and light-switch sales.",
+            content: "Here's the detailed price analysis focusing specifically on dimmer products and their market performance.",
             isUser: false,
             timestamp: new Date(),
             hasChart: true,
-        chartType: 'topSegments',
-        showSupportingCharts: true,
-        supportingChartsLoading: false,
-        showKeyInsights: true,
+            chartType: 'dimmerPriceAnalysis',
+            showSupportingCharts: false,
+            supportingChartsLoading: false,
+            showKeyInsights: false,
             currentInsightIndex: 0,
             initialResponseComplete: false,
-            keyInsights: [
-          `${top3[0]?.name.replace(/\n/g, ' ')} leads overall sales with $${(top3[0]?.value || 0).toLocaleString()} in revenue, highlighting strong consumer interest in smart, connected controls.`,
-          `${top3[1]?.name.replace(/\n/g, ' ')} follows closely, indicating continued popularity of traditional yet reliable switch designs.`,
-          `${top3[2]?.name.replace(/\n/g, ' ')} ranks third, showcasing market demand for versatile multi-location installations.`,
-          "The dominance of smart and Wi-Fi enabled segments underscores the growing importance of connectivity and user convenience across both dimmer and light-switch categories."
-            ],
-        executiveSummary: `The combined analysis of dimmer and light switch categories shows that ${top3[0]?.name.replace(/\n/g, ' ')} captures the largest share of revenue, followed by ${top3[1]?.name.replace(/\n/g, ' ')} and ${top3[2]?.name.replace(/\n/g, ' ')}. This indicates consumers gravitate toward feature-rich smart controls while still valuing familiar switch formats. Targeting these leading segments can maximize short-term gains while informing long-term product strategy.`,
-      }
+            keyInsights: generateDimmerInsights()
+          }
 
-      setMessages(prev => [...prev, aiResponse])
+          setMessages(prev => [...prev, aiResponse])
 
-      // Trigger SSE effect chain for non-historical messages
-      if (!aiResponse.isHistorical) {
-        setTimeout(() => {
-          onInitialResponseComplete(aiResponse.id)
-        }, 1000) // Start SSE effects after 1 second
+          // Trigger SSE effect chain for non-historical messages
+          if (!aiResponse.isHistorical) {
+            setTimeout(() => {
+              onInitialResponseComplete(aiResponse.id)
+            }, 1000) // Start SSE effects after 1 second
+          }
+        }, 2000) // Show analyzing for 2 seconds
       }
 
     } catch (error) {
@@ -636,9 +812,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }))
   }
 
-  // ===== Helpers: Top Selling Segments =====
-  // (duplicate helper definitions removed)
-
   // Review panel context
   const reviewPanel = useReviewPanel()
 
@@ -687,8 +860,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               </Button>
               <Separator orientation="vertical" className="h-4" />
               <div>
-                <h1 className="text-lg font-semibold">AI Market Research Assistant</h1>
-                <p className="text-sm text-gray-600">{projectName}</p>
+                <h1 className="text-lg font-semibold">{projectName}</h1>
+                <p className="text-sm text-gray-600">Smart Home &gt; Dimmer &amp; Light Switches</p>
               </div>
             </div>
           </div>
@@ -720,7 +893,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                             handleSendMessage()
                           }
                         }}
-                        placeholder="Ask me about pricing insights..."
+                        placeholder="How can I help you?"
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         disabled={isLoading}
                       />
@@ -805,6 +978,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                           )}
                         </div>
                       ) : null}
+
+                      {/* Memory Tag */}
+                      {!message.isUser && message.showMemoryTag && (
+                        <div className="mt-4">
+                          <MemoryEditor open={showMemoryEditor} onOpenChange={setShowMemoryEditor}>
+                            <MemoryTag onMemoryClick={() => setShowMemoryEditor(true)} />
+                          </MemoryEditor>
+                        </div>
+                      )}
 
                       {/* AI Response Cards */}
                       {!message.isUser && !message.isAnalyzing && (message.keyInsights || message.executiveSummary) && (
@@ -900,37 +1082,124 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                     </div>
                                   </div>
                                 ) : message.hasChart ? (
-                                  <div className="space-y-4">
+                                  <div className="space-y-6">
                                     {message.chartType === 'topSegments' && (
-                                      <div className="relative h-[600px]">
-                                        <GroupedBarChart
-                                          data={getTopSellingSegmentsChartData()}
-                                          index="name"
-                                          categories={["value"]}
-                                          colors={segmentColors}
-                                          metricType="revenue"
-                                          xAxisLabel="Product Segment"
-                                          yAxisLabel="Revenue ($)"
-                                          title="Top 10 Product Segments by Revenue"
-                                        />
+                                      <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                          <h4 className="font-semibold text-gray-900">Top 10 Product Segments by Revenue</h4>
+                                          <PinButton chart={{
+                                            id: "top-segments-revenue",
+                                            title: "Top 10 Product Segments by Revenue",
+                                            projectName: projectId === "1" ? "Customer Pain Points Analysis" : "New Project",
+                                            projectId: projectId,
+                                            lastUpdated: "2025-05-29",
+                                            autoUpdate: "weekly",
+                                            type: "bar",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <div className="relative h-[600px]">
+                                          <GroupedBarChart
+                                            data={getTopSellingSegmentsChartData()}
+                                            index="name"
+                                            categories={["value"]}
+                                            colors={segmentColors}
+                                            metricType="revenue"
+                                            xAxisLabel="Product Segment"
+                                            yAxisLabel="Revenue ($)"
+                                            title="Top 10 Product Segments by Revenue"
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
+                                    {message.chartType === 'dimmerPriceAnalysis' && project2Data?.dashboardData?.productAnalysis && (
+                                      <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                          <h4 className="font-semibold text-gray-900">Price vs Revenue Analysis (Dimmer Products Only)</h4>
+                                          <PinButton chart={{
+                                            id: "dimmer-price-analysis",
+                                            title: "Price vs Revenue Analysis (Dimmer Products Only)",
+                                            projectName: "New Project",
+                                            projectId: "2",
+                                            lastUpdated: "2025-06-25",
+                                            autoUpdate: null,
+                                            type: "scatter",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <div className="relative h-[600px]">
+                                          <ScatterChart
+                                            dimmerData={getDimmerOnlyData()}
+                                            switchData={[]} // Empty for dimmer-only analysis
+                                            xAxisLabel="Price (USD)"
+                                            yAxisLabel="Revenue (USD)"
+                                            priceType="unit"
+                                            metricType="revenue"
+                                          />
+                                        </div>
                                       </div>
                                     )}
                                     {message.chartType === 'categories' && project1Data?.negativeCategories && (
-                                      <div className="relative" id="critical-categories">
-                                        <CategoryPainPointsBar data={project1Data.negativeCategories} />
+                                      <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                          <h4 className="font-semibold text-gray-900">Category Pain Points Trend Analysis</h4>
+                                          <PinButton chart={{
+                                            id: "critical-categories",
+                                            title: "Category Pain Points Trend Analysis",
+                                            projectName: "Customer Pain Points Analysis",
+                                            projectId: "1",
+                                            lastUpdated: "2025-05-29",
+                                            autoUpdate: "monthly",
+                                            type: "bar",
+                                            isPinned: true
+                                          }} />
+                                        </div>
+                                        <div className="relative" id="critical-categories">
+                                          <CategoryPainPointsBar data={project1Data.negativeCategories} />
+                                        </div>
                                       </div>
                                     )}
                                     {message.chartType === 'categoryTrend' && project1Data?.categoryTrendData && (
-                                      <div className="relative" id="category-trend">
-                                        <CategoryTrendLineChart data={project1Data.categoryTrendData} />
+                                      <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                          <h4 className="font-semibold text-gray-900">Category Pain Points Trend Over Time</h4>
+                                          <PinButton chart={{
+                                            id: "category-trend-analysis",
+                                            title: "Category Pain Points Trend Over Time",
+                                            projectName: "Customer Pain Points Analysis",
+                                            projectId: "1",
+                                            lastUpdated: "2025-05-29",
+                                            autoUpdate: "weekly",
+                                            type: "line",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <div className="relative" id="category-trend">
+                                          <CategoryTrendLineChart data={project1Data.categoryTrendData} />
+                                        </div>
                                       </div>
                                     )}
                                     {message.chartType === 'competitors' && project1Data?.competitorData && (
-                                      <div className="relative" id="competitor-matrix">
-                                        <CompetitorMatrix
-                                          data={project1Data.competitorData.matrixData || []}
-                                          targetProducts={project1Data.competitorData.targetProducts || []}
-                                        />
+                                      <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                          <h4 className="font-semibold text-gray-900">Competitor Pain Points Matrix</h4>
+                                          <PinButton chart={{
+                                            id: "competitor-pain-matrix",
+                                            title: "Competitor Pain Points Matrix",
+                                            projectName: "Customer Pain Points Analysis",
+                                            projectId: "1",
+                                            lastUpdated: "2025-05-29",
+                                            autoUpdate: null,
+                                            type: "matrix",
+                                            isPinned: false
+                                          }} />
+                                        </div>
+                                        <div className="relative" id="competitor-matrix">
+                                          <CompetitorMatrix
+                                            data={project1Data.competitorData.matrixData || []}
+                                            targetProducts={project1Data.competitorData.targetProducts || []}
+                                          />
+                                        </div>
                                       </div>
                                     )}
                                   </div>
@@ -970,7 +1239,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     handleSendMessage()
                   }
                 }}
-                placeholder="Ask me about market analysis, competitive intelligence, or customer insights..."
+                placeholder="How can I help you?"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={isLoading}
               />

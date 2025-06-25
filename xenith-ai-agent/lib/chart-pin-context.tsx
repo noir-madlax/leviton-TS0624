@@ -61,7 +61,7 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
         title: "Category Pain Points Trend Analysis",
         projectName: "Customer Pain Points Analysis",
         projectId: "1",
-        lastUpdated: "2025-05-20",
+        lastUpdated: "2025-05-29",
         autoUpdate: "monthly",
         type: "line",
         isPinned: true
@@ -104,7 +104,7 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
       title: "Category Pain Points Trend Analysis",
       projectName: "Customer Pain Points Analysis",
       projectId: "1",
-      lastUpdated: "2025-05-20",
+      lastUpdated: "2025-05-29",
       autoUpdate: "monthly",
       type: "line",
       isPinned: true

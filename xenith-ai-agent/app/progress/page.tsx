@@ -8,48 +8,58 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Database, Search, BarChart3, Users, CheckCircle, Clock, ArrowRight, Edit2, ArrowLeft } from "lucide-react"
+import { Database, Search, BarChart3, Users, CheckCircle, Clock, ArrowRight, Edit2, ArrowLeft, MessageSquare, FileText } from "lucide-react"
 import { useRouter } from "next/navigation"
+
+interface ActivityMessage {
+  type: 'started' | 'completed' | 'periodic'
+  message: string
+}
 
 const analysisSteps = [
   {
     id: "collecting",
-    title: "Collecting Product Listings",
-    description: "Scanning Amazon for products in Smart Home > Dimmer & Light Switches",
-    icon: Search,
-    duration: 2500,
+    title: "Data Collection",
+    description: "Gathering product listings, specifications, and pricing data",
+    icon: Database,
+    duration: 8000,
+  },
+  {
+    id: "processing",
+    title: "Processing Customer Reviews",
+    description: "Extracting and analyzing customer feedback and ratings",
+    icon: MessageSquare,
+    duration: 7000,
   },
   {
     id: "extracting",
     title: "Extracting Specifications",
-    description: "Processing product details, features, and pricing information",
-    icon: Database,
-    duration: 2000,
-  },
-  {
-    id: "reviews",
-    title: "Processing Customer Reviews",
-    description: "Analyzing pricing trends and market positioning",
-    icon: Users,
-    duration: 3000,
-  },
-  {
-    id: "analyzing",
-    title: "Generating Market Insights",
-    description: "Creating price analysis and competitive positioning reports",
-    icon: BarChart3,
-    duration: 2500,
-  },
+    description: "Organizing product features and technical specifications",
+    icon: FileText,
+    duration: 5000,
+  }
 ]
 
 export default function ProgressPage() {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [progress, setProgress] = useState(0)
-  const [completed, setCompleted] = useState(false)
-  const [activityLog, setActivityLog] = useState<string[]>([])
-  const [projectName, setProjectName] = useState("Dimmer Switch Price Analysis")
+  const [projectName, setProjectName] = useState("New Project")
+  const [isComplete, setIsComplete] = useState(false)
+  const [messages, setMessages] = useState<ActivityMessage[]>([])
   const [isEditingName, setIsEditingName] = useState(false)
-  const router = useRouter()
+
+  const activityMessages = [
+    "Starting data collection for Smart Home > Dimmer & Light Switches...",
+    "Collecting product listings from marketplace...",
+    "Gathering 1,250 products in Smart Home > Dimmer & Light Switches category",
+    "Extracting product specifications and features",
+    "Extracting Specifications completed",
+    "Starting processing customer reviews...",
+    "Processing Customer Reviews completed",
+    "Extracting customer review data from 850,000 reviews",
+    "Data collection complete! Your Smart Home > Dimmer & Light Switches dataset is ready for analysis",
+  ]
 
   useEffect(() => {
     const totalDuration = analysisSteps.reduce((sum, step) => sum + step.duration, 0)
@@ -82,31 +92,24 @@ export default function ProgressPage() {
         // Add activity log entries
         if (newCurrentStep > 0 && newCurrentStep <= analysisSteps.length) {
           const completedStep = analysisSteps[newCurrentStep - 1]
-          setActivityLog((prev) => [...prev, `✓ ${completedStep.title} completed`])
+          setMessages((prev) => [...prev, { type: 'completed', message: `✓ ${completedStep.title} completed` }])
         }
 
         if (newCurrentStep < analysisSteps.length) {
           const currentStepData = analysisSteps[newCurrentStep]
-          setActivityLog((prev) => [...prev, `→ Starting ${currentStepData.title.toLowerCase()}...`])
+          setMessages((prev) => [...prev, { type: 'started', message: `→ Starting ${currentStepData.title.toLowerCase()}...` }])
         }
       }
 
       // Add periodic updates
       if (elapsed % 2000 === 0 && newCurrentStep < analysisSteps.length) {
-        const messages = [
-          "Analyzing 1,250 products in Smart Home category",
-          "Processing product specifications and features",
-          "Extracting customer review sentiment data",
-          "Identifying competitive pricing patterns",
-          "Mapping feature preferences across segments",
-        ]
-        const randomMessage = messages[Math.floor(Math.random() * messages.length)]
-        setActivityLog((prev) => [...prev, `• ${randomMessage}`])
+        const randomMessage = activityMessages[Math.floor(Math.random() * activityMessages.length)]
+        setMessages((prev) => [...prev, { type: 'periodic', message: `• ${randomMessage}` }])
       }
 
       if (elapsed >= totalDuration) {
-        setCompleted(true)
-        setActivityLog((prev) => [...prev, "✓ Price analysis complete! Generating insights..."])
+        setIsComplete(true)
+        setMessages((prev) => [...prev, { type: 'completed', message: "✓ Data collection complete! Your Smart Home > Dimmer & Light Switches dataset is ready for analysis" }])
         
         // Mark project 2 as created and set as current project
         localStorage.setItem('project2-created', 'true')
@@ -173,14 +176,14 @@ export default function ProgressPage() {
               )}
               <p className="text-sm text-gray-600">Smart Home &gt; Dimmer &amp; Light Switches</p>
             </div>
-            {completed ? (
+            {isComplete ? (
               <Button onClick={handleViewResults} className="bg-black hover:bg-gray-800 text-white">
                 Enter
               </Button>
             ) : (
               <Badge variant="outline">
                 <Clock className="w-3 h-3 mr-1" />
-                {Math.ceil((100 - progress) / 20)} min remaining
+                {Math.ceil((100 - progress) / 5)} min remaining
               </Badge>
             )}
           </div>
@@ -201,19 +204,19 @@ export default function ProgressPage() {
             <CardContent>
               <Progress value={progress} className="h-3 mb-4" />
               <div className="text-sm text-gray-600">
-                {completed
-                  ? "Analysis complete! Your market insights are ready."
+                {isComplete
+                  ? "Data collection complete! Your Smart Home > Dimmer & Light Switches dataset is ready for analysis."
                   : `Currently ${analysisSteps[currentStep]?.title.toLowerCase() || "processing"}...`}
               </div>
             </CardContent>
           </Card>
 
           {/* Step Progress */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {analysisSteps.map((step, index) => {
-              const isCompleted = index < currentStep || completed
-              const isCurrent = index === currentStep && !completed
-              const isPending = index > currentStep && !completed
+              const isCompleted = index < currentStep || isComplete
+              const isCurrent = index === currentStep && !isComplete
+              const isPending = index > currentStep && !isComplete
 
               return (
                 <Card
@@ -263,21 +266,21 @@ export default function ProgressPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {activityLog
+                {messages
                   .slice(-10)
                   .reverse()
                   .map((activity, index) => (
                     <div key={index} className="text-sm text-gray-600 font-mono">
-                      {activity}
+                      {activity.message}
                     </div>
                   ))}
-                {activityLog.length === 0 && <div className="text-sm text-gray-400">Starting analysis...</div>}
+                {messages.length === 0 && <div className="text-sm text-gray-400">Starting analysis...</div>}
               </div>
             </CardContent>
           </Card>
 
           {/* Completion Actions */}
-          {completed && (
+          {isComplete && (
             <Card className="border-green-200 bg-green-50">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -286,9 +289,9 @@ export default function ProgressPage() {
                       <CheckCircle className="w-6 h-6 text-green-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-green-800">Analysis Complete!</h3>
+                      <h3 className="font-semibold text-green-800">Data Collection Complete!</h3>
                       <p className="text-sm text-green-600">
-                        Your Smart Home Entertainment market research is ready with actionable insights.
+                        Your Smart Home &gt; Dimmer &amp; Light Switches data collection is ready for analysis.
                       </p>
                     </div>
                   </div>

@@ -43,8 +43,8 @@ const project2 = {
   id: "2",
   name: "Dimmer Switch Price Analysis",
   category: "Smart Home > Dimmer & Light Switches",
-  createdAt: "2025-05-24",
-  lastUpdated: "2025-05-24",
+  createdAt: "2025-06-25",
+  lastUpdated: "2025-06-25",
   status: "completed",
 }
 

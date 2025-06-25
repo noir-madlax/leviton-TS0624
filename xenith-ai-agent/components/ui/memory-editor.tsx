@@ -17,6 +17,8 @@ interface Memory {
   content: string
   timestamp: string
   category: string
+  projectId?: string
+  scope?: "global" | "project"
 }
 
 interface MemoryEditorProps {
@@ -28,34 +30,47 @@ interface MemoryEditorProps {
 
 const defaultMemories: Memory[] = [
   {
-    id: "1",
-    content: "I want to see market share data presented in pie chart format, showing percentage breakdown of total revenue for the past year",
-    timestamp: "2025-05-15",
-    category: "Visualization Preference"
-  },
-  {
-    id: "2", 
-    content: "Focus analysis on Lutron brand performance across different price segments",
-    timestamp: "2025-05-10",
-    category: "Brand Focus"
-  },
-  {
-    id: "3",
-    content: "Include competitive positioning analysis when showing market data",
-    timestamp: "2025-05-08",
-    category: "Analysis Scope"
+    id: "6",
+    content: "Focus analysis specifically on dimmer products only, excluding light switches from detailed analysis",
+    timestamp: "2025-05-16",
+    category: "Product Focus",
+    projectId: "2",
+    scope: "project"
   },
   {
     id: "4",
     content: "Prefer detailed executive summaries with strategic recommendations",
     timestamp: "2025-05-05",
-    category: "Report Format"
+    category: "Report Format",
+    scope: "global"
   },
   {
     id: "5",
     content: "Show both volume and revenue metrics when analyzing market segments",
     timestamp: "2025-05-03",
-    category: "Metrics Preference"
+    category: "Metrics Preference",
+    scope: "global"
+  },
+  {
+    id: "1",
+    content: "I want to see market share data presented in pie chart format, showing percentage breakdown of total revenue for the past year",
+    timestamp: "2025-05-15",
+    category: "Visualization Preference",
+    scope: "global"
+  },
+  {
+    id: "2", 
+    content: "Focus analysis on Lutron brand performance across different price segments",
+    timestamp: "2025-05-10",
+    category: "Brand Focus",
+    scope: "global"
+  },
+  {
+    id: "3",
+    content: "Include competitive positioning analysis when showing market data",
+    timestamp: "2025-05-08",
+    category: "Analysis Scope",
+    scope: "global"
   }
 ]
 
@@ -66,6 +81,7 @@ const categories = [
   "Report Format",
   "Metrics Preference",
   "Data Sources",
+  "Product Focus",
   "Other"
 ]
 
@@ -285,14 +301,22 @@ function MemoryCard({ memory, isEditing, onEdit, onSave, onDelete, onCancel, cat
     <Card className="border-l-4 border-l-blue-500">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <Badge variant="outline" className="text-xs whitespace-nowrap px-2 py-1">
-            {memory.category}
-          </Badge>
           <div className="flex items-center space-x-2">
-            <div className="flex items-center text-xs text-gray-500">
-              <Clock className="h-3 w-3 mr-1" />
-              {memory.timestamp}
-            </div>
+            <Badge variant="outline" className="text-xs whitespace-nowrap px-2 py-1">
+              {memory.category}
+            </Badge>
+            {memory.scope === "project" && memory.projectId && (
+              <Badge variant="secondary" className="text-xs whitespace-nowrap px-2 py-1 bg-blue-100 text-blue-700">
+                Project {memory.projectId}
+              </Badge>
+            )}
+            {memory.scope === "global" && (
+              <Badge variant="secondary" className="text-xs whitespace-nowrap px-2 py-1 bg-green-100 text-green-700">
+                Global
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
             <Button variant="ghost" size="sm" onClick={onEdit} className="h-6 w-6 p-0">
               <Edit3 className="h-3 w-3" />
             </Button>
