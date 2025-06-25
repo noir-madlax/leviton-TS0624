@@ -26,6 +26,10 @@ const ChartPinContext = createContext<ChartPinContextType | undefined>(undefined
 
 const STORAGE_KEY = 'xenith-pinned-charts'
 
+// Migration constants
+const DEFAULT_AUTO_UPDATE = "monthly"
+const DEFAULT_LAST_UPDATED = "2025-05-29"
+
 export function ChartPinProvider({ children }: { children: ReactNode }) {
   const [pinnedCharts, setPinnedCharts] = useState<ChartData[]>([])
 
@@ -44,6 +48,15 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
               autoUpdate: "monthly",
               type: "line",
               lastUpdated: chart.lastUpdated === "2024-01-20" || chart.lastUpdated?.includes("2024-01-20") ? "2025-05-20" : chart.lastUpdated,
+            }
+          }
+          if (chart.id === "category-trend-analysis") {
+            return {
+              ...chart,
+              title: "Category Pain Points Trend Over Time",
+              autoUpdate: "monthly",
+              type: "line",
+              lastUpdated: chart.lastUpdated === "2024-01-20" || chart.lastUpdated?.includes("2024-01-20") ? "2025-05-29" : chart.lastUpdated,
             }
           }
           return chart

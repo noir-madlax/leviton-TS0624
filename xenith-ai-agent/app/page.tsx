@@ -54,7 +54,7 @@ const mockCharts = [
     title: "Use Case Analysis",
     projectName: "Customer Pain Points Analysis",
     lastUpdated: "2025-05-20",
-    autoUpdate: "montly",
+    autoUpdate: "monthly",
     type: "bar",
   },
   {
@@ -70,7 +70,7 @@ const mockCharts = [
     title: "Competitor Pain Points Matrix",
     projectName: "Customer Pain Points Analysis",
     lastUpdated: "2025-05-19",
-    autoUpdate: "montly",
+    autoUpdate: "monthly",
     type: "matrix",
   },
   {
@@ -78,7 +78,7 @@ const mockCharts = [
     title: "Feature Adoption Rates",
     projectName: "Kitchen Appliances Market Research",
     lastUpdated: "2025-05-17",
-    autoUpdate: null,
+    autoUpdate: "monthly",
     type: "bar",
   },
 ]
