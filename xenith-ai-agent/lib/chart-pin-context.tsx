@@ -55,14 +55,14 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
         console.error('Error loading pinned charts:', error)
       }
     } else {
-      // Set default pinned chart - "Top 10 Most Critical Categories"
+      // Set default pinned chart - "Category Pain Points Trend Over Time"
       const defaultPinnedChart: ChartData = {
-        id: "critical-categories",
-        title: "Category Pain Points Trend Analysis",
+        id: "category-trend-analysis",
+        title: "Category Pain Points Trend Over Time",
         projectName: "Customer Pain Points Analysis",
         projectId: "1",
         lastUpdated: "2025-05-29",
-        autoUpdate: "monthly",
+        autoUpdate: "weekly",
         type: "line",
         isPinned: true
       }
@@ -100,12 +100,12 @@ export function ChartPinProvider({ children }: { children: ReactNode }) {
   const resetPins = () => {
     // Reset to default pinned chart only
     const defaultPinnedChart: ChartData = {
-      id: "critical-categories",
-      title: "Category Pain Points Trend Analysis",
+      id: "category-trend-analysis",
+      title: "Category Pain Points Trend Over Time",
       projectName: "Customer Pain Points Analysis",
       projectId: "1",
       lastUpdated: "2025-05-29",
-      autoUpdate: "monthly",
+      autoUpdate: "weekly",
       type: "line",
       isPinned: true
     }

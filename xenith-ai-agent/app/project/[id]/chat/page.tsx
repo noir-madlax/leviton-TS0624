@@ -224,47 +224,39 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       // Initialize historical conversation for Project 1
       const historicalMessages: Message[] = [
         {
-          id: "hist-3",
-          content: "What product features do customers complain about the most?",
-          isUser: true,
-          timestamp: new Date(Date.now() - 200000), // 3+ minutes ago
-          isHistorical: true
-        },
-        {
-          id: "hist-4",
+          id: "hist-2",
           content: "",
           isUser: false,
-          timestamp: new Date(Date.now() - 180000),
+          timestamp: new Date(Date.now() - 250000),
           isHistorical: true,
           hasChart: true,
           chartType: 'categories',
-          showExecutiveSummary: true,
+          showExecutiveSummary: false,
           showSupportingCharts: true,
           showKeyInsights: true,
           keyInsights: [
             "Installation leads with the highest negative review count, indicating systematic issues with product setup procedures and documentation.",
             "App and connectivity problems rank second, highlighting the critical importance of software reliability in smart home devices.",
             "Build quality concerns appear frequently, suggesting potential manufacturing or design issues affecting long-term durability.",
-            "Switch performance issues directly impact core functionality, representing fundamental product reliability concerns."
-          ],
-          executiveSummary: "The critical categories analysis reveals that operational aspects (installation, connectivity, build quality) generate more negative feedback than core electrical functionality. This pattern suggests that while the fundamental dimming technology is sound, the user experience and product ecosystem need significant improvement to reduce customer dissatisfaction."
+            "Dimming control performance issues affect user satisfaction, pointing to core functionality gaps that need immediate attention."
+          ]
         },
         {
-          id: "hist-5",
+          id: "hist-3",
           content: "What are the trends for these categories over the last year?",
           isUser: true,
           timestamp: new Date(Date.now() - 150000), // 2.5 minutes ago
           isHistorical: true
         },
         {
-          id: "hist-6",
+          id: "hist-4",
           content: "",
           isUser: false,
           timestamp: new Date(Date.now() - 130000),
           isHistorical: true,
           hasChart: true,
           chartType: 'categoryTrend',
-          showExecutiveSummary: true,
+          showExecutiveSummary: false,
           showSupportingCharts: true,
           showKeyInsights: true,
           keyInsights: [
@@ -272,25 +264,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             "Network Connection Stability issues peaked mid-year but have declined 10% following recent firmware updates.",
             "Product Reliability complaints remain consistently high with only marginal improvement, suggesting systemic quality concerns persist.",
             "Dimming Control Performance shows seasonal fluctuation with a modest upward trend, pointing to unresolved usability issues."
-          ],
-          executiveSummary: "Overall trend analysis demonstrates that performance-related categories continue to accumulate negative feedback over time. The persistent rise in Product Lifespan and Reliability complaints underscores the need for design and quality improvements. Conversely, targeted software updates appear effective in reducing connectivity-related issues."
+          ]
         },
         {
-          id: "hist-7",
+          id: "hist-5",
           content: "Show that for 3 top selling products by Leviton and 3 top competitors",
           isUser: true,
           timestamp: new Date(Date.now() - 100000), // 1+ minutes ago
           isHistorical: true
         },
         {
-          id: "hist-8",
+          id: "hist-6",
           content: "",
           isUser: false,
           timestamp: new Date(Date.now() - 80000),
           isHistorical: true,
           hasChart: true,
           chartType: 'competitors',
-          showExecutiveSummary: true,
+          showExecutiveSummary: false,
           showSupportingCharts: true,
           showKeyInsights: true,
           keyInsights: [
@@ -298,8 +289,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             "Leviton DSL06 demonstrates consistent moderate performance across categories, with particular strength in basic switch functionality.",
             "Lutron Caseta Diva excels in app integration and smart features but shows some installation complexity issues.",
             "Cross-brand analysis reveals that no single product dominates all categories, indicating opportunities for targeted improvements."
-          ],
-          executiveSummary: "The competitive matrix for the three specified products shows distinct positioning strategies. Leviton products focus on installation simplicity and basic functionality, while Lutron emphasizes smart features and app integration. Each product has specific strengths and weaknesses, creating a diversified competitive landscape where customer choice depends on priority features and technical comfort level."
+          ]
         }
       ]
 
@@ -342,11 +332,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   // Sequential display management
   const onInitialResponseComplete = (messageId: string) => {
-    // For topSegments, skip Executive Summary and go directly to Key Insights
+    // For project 1 (all types) and project 2 (topSegments, dimmerPriceAnalysis), skip Executive Summary and go directly to Key Insights
     setTimeout(() => {
       setMessages(prev => {
         const message = prev.find(msg => msg.id === messageId)
-        if (message?.chartType === 'topSegments' || message?.chartType === 'dimmerPriceAnalysis') {
+        if (projectId === "1" || message?.chartType === 'topSegments' || message?.chartType === 'dimmerPriceAnalysis') {
           return prev.map(msg => {
             if (msg.id !== messageId) return msg
             return { 
@@ -357,7 +347,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             }
           })
         }
-        // For other types, show Executive Summary
+        // For project 2 other types, show Executive Summary
         return prev.map(msg => {
           if (msg.id !== messageId) return msg
           return { ...msg, showExecutiveSummary: true }
@@ -366,7 +356,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       
       // Scroll to appropriate section
       const message = messages.find(msg => msg.id === messageId)
-      if (message?.chartType === 'topSegments' || message?.chartType === 'dimmerPriceAnalysis') {
+      if (projectId === "1" || message?.chartType === 'topSegments' || message?.chartType === 'dimmerPriceAnalysis') {
         setTimeout(() => scrollToSection(keyInsightsRef), 500)
       } else {
         setTimeout(() => scrollToSection(executiveSummaryRef), 500)
@@ -416,9 +406,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         ))
       }, 300)
     } else {
-      // All insights completed, show Supporting Charts for topSegments and dimmerPriceAnalysis
+      // All insights completed, show Supporting Charts for project 1 (all types) and project 2 (topSegments, dimmerPriceAnalysis)
       const message = messages.find(msg => msg.id === messageId)
-      if (message?.chartType === 'topSegments' || message?.chartType === 'dimmerPriceAnalysis') {
+      if (projectId === "1" || message?.chartType === 'topSegments' || message?.chartType === 'dimmerPriceAnalysis') {
         setTimeout(() => {
           setMessages(prev => prev.map(msg => 
             msg.id === messageId ? { ...msg, showSupportingCharts: true, supportingChartsLoading: false } : msg
@@ -639,54 +629,36 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
         setMessages(prev => [...prev, analyzingMessage])
         setIsLoading(true)
-        setCurrentStage("Analyzing price data")
-        setCurrentProgress(0)
 
-        // Simulate analysis progress
-        const progressInterval = setInterval(() => {
-          setCurrentProgress(prev => {
-            if (prev >= 100) {
-              clearInterval(progressInterval)
-              return 100
-            }
-            return prev + 20
-          })
-        }, 200)
+        // Use the same detailed analysis process as step 1
+        await simulateAnalysis()
 
-        // After analysis, show the actual response
-        setTimeout(() => {
-          setIsLoading(false)
-          setCurrentStage("")
-          setCurrentProgress(0)
-          clearInterval(progressInterval)
+        // Remove analyzing message and add actual response
+        setMessages(prev => prev.filter(msg => msg.id !== analyzingMessage.id))
 
-          // Remove analyzing message and add actual response
-          setMessages(prev => prev.filter(msg => msg.id !== analyzingMessage.id))
+        const aiResponse: Message = {
+          id: (Date.now() + 2).toString(),
+          content: "Here's the detailed price analysis focusing specifically on dimmer products and their market performance.",
+          isUser: false,
+          timestamp: new Date(),
+          hasChart: true,
+          chartType: 'dimmerPriceAnalysis',
+          showSupportingCharts: false,
+          supportingChartsLoading: false,
+          showKeyInsights: false,
+          currentInsightIndex: 0,
+          initialResponseComplete: false,
+          keyInsights: generateDimmerInsights()
+        }
 
-          const aiResponse: Message = {
-            id: (Date.now() + 2).toString(),
-            content: "Here's the detailed price analysis focusing specifically on dimmer products and their market performance.",
-            isUser: false,
-            timestamp: new Date(),
-            hasChart: true,
-            chartType: 'dimmerPriceAnalysis',
-            showSupportingCharts: false,
-            supportingChartsLoading: false,
-            showKeyInsights: false,
-            currentInsightIndex: 0,
-            initialResponseComplete: false,
-            keyInsights: generateDimmerInsights()
-          }
+        setMessages(prev => [...prev, aiResponse])
 
-          setMessages(prev => [...prev, aiResponse])
-
-          // Trigger SSE effect chain for non-historical messages
-          if (!aiResponse.isHistorical) {
-            setTimeout(() => {
-              onInitialResponseComplete(aiResponse.id)
-            }, 1000) // Start SSE effects after 1 second
-          }
-        }, 2000) // Show analyzing for 2 seconds
+        // Trigger SSE effect chain for non-historical messages
+        if (!aiResponse.isHistorical) {
+          setTimeout(() => {
+            onInitialResponseComplete(aiResponse.id)
+          }, 1000) // Start SSE effects after 1 second
+        }
       }
 
     } catch (error) {
@@ -876,13 +848,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <MessageSquare className="h-8 w-8 text-blue-600" />
                 </div>
-                <h2 className="text-xl font-semibold mb-2">Welcome to AI Market Research</h2>
-                <p className="text-gray-600 mb-8">Ask me anything about market analysis, competitive intelligence, or customer insights.</p>
+                <h2 className="text-xl font-semibold mb-2">Welcome to Xenith</h2>
                 
                 {projectId === "2" && (
-                  <div className="max-w-2xl w-full mx-auto">
+                  <div className="w-full max-w-4xl mx-auto">
                     {/* Chat input */}
-                    <div className="flex space-x-3">
+                    <div className="flex space-x-3 max-w-2xl mx-auto">
                       <input
                         type="text"
                         value={input}
@@ -910,18 +881,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                       </Button>
                     </div>
 
-                    {/* FAQ list with reduced gap (mt-6) */}
-                    <div className="flex flex-col gap-4 mt-6">
+                    {/* FAQ list with 2-column grid layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
                       {examplePrompts.map((example, index) => (
                         <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleExampleClick(example.prompt)}>
-                          <CardHeader className="pb-3">
+                          <CardHeader className="pb-2 pt-3">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <example.icon className="h-5 w-5 text-blue-600" />
+                              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <example.icon className="h-4 w-4 text-blue-600" />
                               </div>
-                              <div>
-                                <CardTitle className="text-sm text-left">{example.title}</CardTitle>
-                                <CardDescription className="text-xs text-left">{example.description}</CardDescription>
+                              <div className="min-w-0 flex-1">
+                                <CardTitle className="text-sm text-left leading-tight">{example.title}</CardTitle>
+                                <CardDescription className="text-xs text-left mt-1 leading-tight">{example.description}</CardDescription>
                               </div>
                             </div>
                           </CardHeader>
@@ -1151,7 +1122,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                             lastUpdated: "2025-05-29",
                                             autoUpdate: "monthly",
                                             type: "bar",
-                                            isPinned: true
+                                            isPinned: false
                                           }} />
                                         </div>
                                         <div className="relative" id="critical-categories">
@@ -1171,7 +1142,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                             lastUpdated: "2025-05-29",
                                             autoUpdate: "weekly",
                                             type: "line",
-                                            isPinned: false
+                                            isPinned: true
                                           }} />
                                         </div>
                                         <div className="relative" id="category-trend">
