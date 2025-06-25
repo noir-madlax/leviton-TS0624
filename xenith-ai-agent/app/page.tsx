@@ -54,7 +54,7 @@ const mockCharts = [
     title: "Use Case Analysis",
     projectName: "Customer Pain Points Analysis",
     lastUpdated: "2025-05-20",
-    autoUpdate: "weekly",
+    autoUpdate: "montly",
     type: "bar",
   },
   {
@@ -70,7 +70,7 @@ const mockCharts = [
     title: "Competitor Pain Points Matrix",
     projectName: "Customer Pain Points Analysis",
     lastUpdated: "2025-05-19",
-    autoUpdate: "weekly",
+    autoUpdate: "montly",
     type: "matrix",
   },
   {

@@ -1046,7 +1046,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                             projectName: projectId === "1" ? "Customer Pain Points Analysis" : "New Project",
                                             projectId: projectId,
                                             lastUpdated: "2025-05-29",
-                                            autoUpdate: "weekly",
+                                            autoUpdate: "montly",
                                             type: "bar",
                                             isPinned: false
                                           }} />
@@ -1122,7 +1122,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                             projectName: "Customer Pain Points Analysis",
                                             projectId: "1",
                                             lastUpdated: "2025-05-29",
-                                            autoUpdate: "weekly",
+                                            autoUpdate: "montly",
                                             type: "line",
                                             isPinned: true
                                           }} />

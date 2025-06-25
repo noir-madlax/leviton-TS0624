@@ -273,7 +273,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                         projectName: "Customer Pain Points Analysis",
                         projectId: "1",
                         lastUpdated: "2025-05-20",
-                        autoUpdate: "weekly",
+                        autoUpdate: "montly",
                         type: "bar",
                         isPinned: false
                       }} />
@@ -310,7 +310,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                         projectName: "Customer Pain Points Analysis",
                         projectId: "1",
                         lastUpdated: "2025-05-20",
-                        autoUpdate: "weekly",
+                        autoUpdate: "montly",
                         type: "bar",
                         isPinned: false
                       }} />
@@ -338,7 +338,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                         projectName: "Customer Pain Points Analysis",
                         projectId: "1",
                         lastUpdated: "2025-05-19",
-                        autoUpdate: "weekly",
+                        autoUpdate: "montly",
                         type: "matrix",
                         isPinned: false
                       }} />
