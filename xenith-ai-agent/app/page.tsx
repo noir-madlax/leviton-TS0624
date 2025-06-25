@@ -140,6 +140,8 @@ export default function HomePage() {
     switch (chartId) {
       case "critical-categories":
         return "categories"
+      case "category-trend-analysis":
+        return "" // Chat page link
       case "use-case-analysis":
         return "use-cases"
       case "competitor-matrix":
@@ -279,7 +281,7 @@ export default function HomePage() {
                                   <RefreshCw className="w-3 h-3 mr-1" />
                                   Update
                                 </Button>
-                                <Link href={chart.id === "critical-categories" ? `/project/1/chat#critical-categories` : `/project/${chart.projectId}?tab=${getChartTab(chart.id)}`}>
+                                <Link href={chart.id === "critical-categories" ? `/project/1/chat#critical-categories` : chart.id === "category-trend-analysis" ? `/project/1/chat#category-trend` : `/project/${chart.projectId}?tab=${getChartTab(chart.id)}`}>
                                   <Button variant="default" size="sm">
                                     View Details
                                   </Button>
